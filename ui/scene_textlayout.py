@@ -20,8 +20,8 @@ PUNSET_HALF = {chr(i) for i in range(0x21, 0x7F)}
 
 # https://www.w3.org/TR/2022/DNOTE-clreq-20220801/#tables_of_chinese_punctuation_marks
 # https://www.w3.org/TR/2022/DNOTE-clreq-20220801/#glyphs_sizes_and_positions_in_character_faces_of_punctuation_marks
-PUNSET_PAUSEORSTOP = {'。', '．', '，', '、', '·', '：', '；', '！', '？'}     # dont need to rotate, 
-PUNSET_ALIGNCENTER = {'。', '．', '，', '、', '·'}
+PUNSET_PAUSEORSTOP = {'。', '．', '，', '、', '·', '：', '；', '！', '？','︒','︐','︑'}     # dont need to rotate, 
+PUNSET_ALIGNCENTER = {'·','．'}
 PUNSET_BRACKETL = {'「', '『', '“', '‘', '（', '《', '〈', '【', '〖', '〔', '［', '｛', '('}
 PUNSET_BRACKETR = {'」', '』', '”', '’', '）', '》', '〉', '】', '〗', '〕', '］', '｝', ')'}
 PUNSET_BRACKET = PUNSET_BRACKETL.union(PUNSET_BRACKETR)
@@ -31,6 +31,8 @@ PUNSET_VERNEEDROTATE = PUNSET_NONBRACKET.union(PUNSET_BRACKET).union(PUNSET_HALF
 
 PUNSET_ROTATE_ALIGNL = {'」', '』', '”', '’'}
 PUNSET_ROTATE_ALIGNR = {'「', '『', '“', '‘'}
+
+PUNSET_EASTERN_VERTICAL = {'。','、','，'}
 
 Dingbats_vertical_aligncenter = r'\u2700-\u275A\u2761-\u2767\u2776-\u27BF'
 Miscellaneous_Symbols_Pattern = r'\u2600-\u26FF'  # align center in vertical mode
@@ -434,6 +436,8 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                 char = blk_text[char_idx]
                 cfmt = self.get_char_fontfmt(blk_no, char_idx)
                 
+                
+                
                 line_width = -1
                 if char_idx in char_records:
                     line_width = char_records[char_idx]['line_width']
@@ -464,11 +468,14 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                             yoff = yoff - (line_width - non_bracket_br[3])
                         else:
                             yoff = yoff - (line_width - non_bracket_br[3]) / 2
-
                 else:
                     # other characters will simply be aligned center for this line
                     act_rect = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)
                     if vertical_force_aligncentel(char):
+                        
+                        if char in PUNSET_EASTERN_VERTICAL:
+                            xoff = (line_width - act_rect[2]) 
+
                         yoff = -act_rect[1]
                     else:
                         yoff = min(cfmt.br.top() - cfmt.tbr.top(), -cfmt.tbr.top() - line.ascent())
@@ -479,10 +486,14 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                     if num_lspaces > 0:
                         xoff -= space_shift
                         yoff += space_shift
-
+                    
                     if char in PUNSET_ALIGNCENTER:
                         tbr, br = cfmt.punc_rect(char)
                         yoff += (tbr.height() + cfmt.font_metrics.descent() - act_rect[3]) / 2
+                    
+                    if char in PUNSET_EASTERN_VERTICAL:
+                        yoff = -act_rect[1]
+                        xoff = line_width - act_rect[2] - act_rect[0]
 
                 # else:
                 #     empty_spacing = num_lspaces * cfmt.space_width
