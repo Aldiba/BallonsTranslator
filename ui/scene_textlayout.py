@@ -29,8 +29,8 @@ PUNSET_BRACKET = PUNSET_BRACKETL.union(PUNSET_BRACKETR)
 PUNSET_NONBRACKET = {'⸺', '…', '⋯', '～', '-', '–', '—', '＿', '﹏', '●', '•', '~'}
 PUNSET_VERNEEDROTATE = PUNSET_NONBRACKET.union(PUNSET_BRACKET).union(PUNSET_HALF)
 
-PUNSET_ROTATE_ALIGNL = {'」', '』', '”', '’'}
-PUNSET_ROTATE_ALIGNR = {'「', '『', '“', '‘'}
+PUNSET_ROTATE_ALIGNL = {'」', '』', '”', '’', '）', '》', '〉', '】', '〗', '〕', '］', '｝', ')'}
+PUNSET_ROTATE_ALIGNR = {'「', '『', '“', '‘', '（', '《', '〈', '【', '〖', '〔', '［', '｛', '('}
 
 PUNSET_EASTERN_VERTICAL = {'。','、','，'}
 
