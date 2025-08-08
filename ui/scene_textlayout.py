@@ -457,15 +457,22 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                         yoff = -non_bracket_br[1] - non_bracket_br[3]
                         if char in PUNSET_BRACKETL:
                             xoff = 0
+                        # elif char in PUNSET_BRACKETR:
+                        #     xoff = 0
                         else:
                             xoff = -non_bracket_br[0]
 
                         if char in PUNSET_ROTATE_ALIGNL:
-                            yoff = yoff
+                            yoff =  yoff 
+                            
                         elif char in PUNSET_ROTATE_ALIGNR:
-                            yoff = yoff - (line_width - non_bracket_br[3])
+                            
+                            yoff = yoff-2*act_rect[1]
+                            xoff = -act_rect[2]/2
+                            # xoff = line_width - act_rect[2]- act_rect[0]
+
                         else:
-                            yoff = yoff - (line_width - non_bracket_br[3]) / 2
+                            yoff = -non_bracket_br[1] - non_bracket_br[3] - (cfmt.br.width() - non_bracket_br[3]) / 2
 
                 else:
                     # other characters will simply be aligned center for this line
@@ -742,16 +749,31 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                     if char.isalpha():
                         cw2 = cfmt.punc_rect(char+char)[1].width()
                         tbr_h = br.width() - (br.width() * 2 - cw2)
+
+                    #前后括号
+                    elif char in PUNSET_ROTATE_ALIGNR:
+                        tbr_h = line.naturalTextWidth()/2 + let_sp_offset
+                        single_char_h = tbr.width()
+
+                    elif char in PUNSET_ROTATE_ALIGNL:
+                        tbr_h = line.naturalTextWidth()/2
+                        single_char_h = tbr.width()/2
+                        
                     elif char in {'…', '⋯', '—', '～'}:
                         tbr_h = line.naturalTextWidth() - num_lspaces * space_w
                         next_char_idx = char_idx + 1
                         if next_char_idx < blk_text_len and blk_text[next_char_idx] == char:
                             tbr_h -= let_sp_offset
+                    
+            
+
                     else:
                         tbr_h = line.naturalTextWidth() - num_lspaces * space_w
                     tbr_h += let_sp_offset
                 elif vertical_force_aligncentel(char):
                     if char not in PUNSET_ALIGNCENTER:
+                        tbr_h = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)[3]
+                    elif char in PUNSET_EASTERN_VERTICAL:
                         tbr_h = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)[3]
                     else:
                         tbr, br = cfmt.punc_rect(char)
