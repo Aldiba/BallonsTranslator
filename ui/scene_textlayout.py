@@ -29,8 +29,11 @@ PUNSET_BRACKET = PUNSET_BRACKETL.union(PUNSET_BRACKETR)
 PUNSET_NONBRACKET = {'⸺', '…', '⋯', '～', '-', '–', '—', '＿', '﹏', '●', '•', '~'}
 PUNSET_VERNEEDROTATE = PUNSET_NONBRACKET.union(PUNSET_BRACKET).union(PUNSET_HALF)
 
-PUNSET_ROTATE_ALIGNL = {'」', '』', '”', '’', '）', '》', '〉', '】', '〗', '〕', '］', '｝', ')'}
-PUNSET_ROTATE_ALIGNR = {'「', '『', '“', '‘', '（', '《', '〈', '【', '〖', '〔', '［', '｛', '('}
+PUNSET_ROTATE_ALIGNL = {'」', '』', '”', '’'}
+PUNSET_ROTATE_ALIGNR = {'「', '『', '“', '‘'}
+
+PUNSET_ROTATE_BRACKETL = {'）', '》', '〉', '】', '〗', '〕', '］', '｝', ')'}
+PUNSET_ROTATE_BRACKETR = {'（', '《', '〈', '【', '〖', '〔', '［', '｛', '('}
 
 PUNSET_EASTERN_VERTICAL = {'。','、','，'}
 
@@ -471,6 +474,11 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                             xoff = -act_rect[2]/2
                             # xoff = line_width - act_rect[2]- act_rect[0]
 
+                        elif char in PUNSET_ROTATE_BRACKETR:
+                            
+                            # yoff = yoff-2*act_rect[1]
+                            xoff = -act_rect[2]/2
+
                         else:
                             yoff = -non_bracket_br[1] - non_bracket_br[3] - (cfmt.br.width() - non_bracket_br[3]) / 2
 
@@ -755,7 +763,11 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                         tbr_h = line.naturalTextWidth()/2 + let_sp_offset
                         single_char_h = tbr.width()
 
-                    elif char in PUNSET_ROTATE_ALIGNL:
+                    elif char in PUNSET_ROTATE_BRACKETL:
+                        tbr_h = line.naturalTextWidth()/2 
+                        single_char_h = tbr.width()
+
+                    elif char in PUNSET_ROTATE_ALIGNL or char in PUNSET_ROTATE_BRACKETR:
                         tbr_h = line.naturalTextWidth()/2
                         single_char_h = tbr.width()/2
                         
