@@ -786,7 +786,8 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                     if char not in PUNSET_ALIGNCENTER:
                         tbr_h = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)[3]
                     elif char in PUNSET_EASTERN_VERTICAL:
-                        tbr_h = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)[3]
+                        tbr, br = cfmt.punc_rect(char)
+                        tbr_h = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)[3]+tbr.height()/2
                     else:
                         tbr, br = cfmt.punc_rect(char)
                         tbr_h = tbr.height() + cfmt.font_metrics.descent()
