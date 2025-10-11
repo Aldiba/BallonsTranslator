@@ -466,15 +466,15 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                             xoff = -non_bracket_br[0]
 
                         if char in PUNSET_ROTATE_ALIGNL:
-                            yoff =  yoff 
+                            yoff = yoff-2*act_rect[1]
+                            
                             
                         elif char in PUNSET_ROTATE_ALIGNR:
+                            yoff = yoff+2*act_rect[1]
+                            xoff = -act_rect[2]/3
                             
-                            yoff = yoff-2*act_rect[1]
-                            xoff = -act_rect[2]/2
-                            # xoff = line_width - act_rect[2]- act_rect[0]
 
-                        elif char in PUNSET_ROTATE_BRACKETR:
+                        if char in PUNSET_ROTATE_BRACKETR:
                             
                             # yoff = yoff-2*act_rect[1]
                             xoff = -act_rect[2]/2
