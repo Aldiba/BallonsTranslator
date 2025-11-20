@@ -29,11 +29,9 @@ PUNSET_BRACKET = PUNSET_BRACKETL.union(PUNSET_BRACKETR)
 PUNSET_NONBRACKET = {'⸺', '…', '⋯', '～', '-', '–', '—', '＿', '﹏', '●', '•', '~'}
 PUNSET_VERNEEDROTATE = PUNSET_NONBRACKET.union(PUNSET_BRACKET).union(PUNSET_HALF)
 
-PUNSET_ROTATE_ALIGNL = {'」', '』', '”', '’'}
-PUNSET_ROTATE_ALIGNR = {'「', '『', '“', '‘'}
+PUNSET_ROTATE_ALIGNL = {'「', '『', '“', '‘'}
+PUNSET_ROTATE_ALIGNR = {'」', '』', '”', '’'}
 
-PUNSET_ROTATE_BRACKETL = {'）', '》', '〉', '】', '〗', '〕', '］', '｝', ')'}
-PUNSET_ROTATE_BRACKETR = {'（', '《', '〈', '【', '〖', '〔', '［', '｛', '('}
 
 PUNSET_EASTERN_VERTICAL = {'。','、','，'}
 
@@ -459,28 +457,15 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                         non_bracket_br = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)
                         yoff = -non_bracket_br[1] - non_bracket_br[3]
                         if char in PUNSET_BRACKETL:
-                            xoff = 0
-                        # elif char in PUNSET_BRACKETR:
-                        #     xoff = 0
+                            # xoff = 0
+                            xoff = - act_rect[2] + 2*act_rect[0]
+    
                         else:
                             xoff = -non_bracket_br[0]
 
-                        if char in PUNSET_ROTATE_ALIGNL:
-                            yoff = yoff-2*act_rect[1]
-                            
-                            
-                        elif char in PUNSET_ROTATE_ALIGNR:
-                            yoff = yoff+2*act_rect[1]
-                            xoff = -act_rect[2]/3
-                            
-
-                        if char in PUNSET_ROTATE_BRACKETR:
-                            
-                            # yoff = yoff-2*act_rect[1]
-                            xoff = -act_rect[2]/2
-
-                        else:
-                            yoff = -non_bracket_br[1] - non_bracket_br[3] - (cfmt.br.width() - non_bracket_br[3]) / 2
+                        # if char in PUNSET_BRACKETL:
+                        #     xoff = - act_rect[0]
+                        
 
                 else:
                     # other characters will simply be aligned center for this line
@@ -504,6 +489,7 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                     if char in PUNSET_EASTERN_VERTICAL:
                         yoff = -act_rect[1]
                         xoff = line_width - act_rect[2] - act_rect[0]
+
 
 
 
@@ -759,17 +745,13 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                         tbr_h = br.width() - (br.width() * 2 - cw2)
 
                     #前后括号
-                    elif char in PUNSET_ROTATE_ALIGNR:
-                        tbr_h = line.naturalTextWidth()/2 + let_sp_offset
-                        single_char_h = tbr.width()
+                    elif char in PUNSET_BRACKETR:
+                        tbr_h = line.naturalTextWidth()/4 + let_sp_offset
+                        single_char_h = tbr.width()/4
 
-                    elif char in PUNSET_ROTATE_BRACKETL:
-                        tbr_h = line.naturalTextWidth()/2 
-                        single_char_h = tbr.width()
-
-                    elif char in PUNSET_ROTATE_ALIGNL or char in PUNSET_ROTATE_BRACKETR:
-                        tbr_h = line.naturalTextWidth()/2
-                        single_char_h = tbr.width()/2
+                    elif char in PUNSET_BRACKETL:
+                        tbr_h = line.naturalTextWidth()/8
+                        single_char_h = tbr.width()/8
                         
                     elif char in {'…', '⋯', '—', '～'}:
                         tbr_h = line.naturalTextWidth() - num_lspaces * space_w
@@ -786,8 +768,7 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                     if char not in PUNSET_ALIGNCENTER:
                         tbr_h = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)[3]
                     elif char in PUNSET_EASTERN_VERTICAL:
-                        tbr, br = cfmt.punc_rect(char)
-                        tbr_h = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)[3]+tbr.height()/2
+                        tbr_h = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)[3]
                     else:
                         tbr, br = cfmt.punc_rect(char)
                         tbr_h = tbr.height() + cfmt.font_metrics.descent()
