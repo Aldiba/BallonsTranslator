@@ -96,6 +96,8 @@ def imread(imgpath, read_type=cv2.IMREAD_COLOR, max_retry_limit=5, retry_interva
     while True:
         try:
             img = Image.open(imgpath)
+            if img.mode == 'CMYK':
+                img = img.convert('RGB')
             if read_type == cv2.IMREAD_GRAYSCALE:
                 img = img.convert('L')
             img = np.array(img)
@@ -130,6 +132,9 @@ def imwrite(img_path, img, ext='.png', quality=100, jxl_encode_effort=3):
         img_path = img_path.replace(suffix, ext)
     else:
         img_path += ext
+
+    if ext != '.webp':
+        quality = min(quality, 100) # for webp quality above 100 the lossless compression is used
     
     # Ensure directory exists
     save_dir = osp.dirname(img_path)

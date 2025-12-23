@@ -20,8 +20,8 @@ PUNSET_HALF = {chr(i) for i in range(0x21, 0x7F)}
 
 # https://www.w3.org/TR/2022/DNOTE-clreq-20220801/#tables_of_chinese_punctuation_marks
 # https://www.w3.org/TR/2022/DNOTE-clreq-20220801/#glyphs_sizes_and_positions_in_character_faces_of_punctuation_marks
-PUNSET_PAUSEORSTOP = {'。', '．', '，', '、', '·', '：', '；', '！', '？','︒','︐','︑','?','!','','⁉','!!'}    # dont need to rotate, 
-PUNSET_ALIGNCENTER = {'．', '·'}
+PUNSET_PAUSEORSTOP = {'。', '．', '，', '、', '·', '：', '；', '！', '？'}     # dont need to rotate, 
+PUNSET_ALIGNCENTER = {'。', '．', '，', '、', '·'}
 PUNSET_BRACKETL = {'「', '『', '“', '‘', '（', '《', '〈', '【', '〖', '〔', '［', '｛', '('}
 PUNSET_BRACKETR = {'」', '』', '”', '’', '）', '》', '〉', '】', '〗', '〕', '］', '｝', ')'}
 PUNSET_BRACKET = PUNSET_BRACKETL.union(PUNSET_BRACKETR)
@@ -29,9 +29,8 @@ PUNSET_BRACKET = PUNSET_BRACKETL.union(PUNSET_BRACKETR)
 PUNSET_NONBRACKET = {'⸺', '…', '⋯', '～', '-', '–', '—', '＿', '﹏', '●', '•', '~'}
 PUNSET_VERNEEDROTATE = PUNSET_NONBRACKET.union(PUNSET_BRACKET).union(PUNSET_HALF)
 
-PUNSET_ROTATE_ALIGNL = {'「', '『', '“', '‘'}
 PUNSET_ROTATE_ALIGNR = {'」', '』', '”', '’'}
-
+PUNSET_ROTATE_ALIGNL = {'「', '『', '“', '‘'}
 
 PUNSET_EASTERN_VERTICAL = {'。','、','，'}
 
@@ -457,15 +456,22 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                         non_bracket_br = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)
                         yoff = -non_bracket_br[1] - non_bracket_br[3]
                         if char in PUNSET_BRACKETL:
-                            # xoff = 0
-                            xoff = - act_rect[2] + 2*act_rect[0]
-    
+                            xoff = 0
+                            # xoff = -non_bracket_br[0]
                         else:
                             xoff = -non_bracket_br[0]
 
+                        if char in PUNSET_ROTATE_ALIGNR:
+                            yoff = yoff
+                        elif char in PUNSET_ROTATE_ALIGNL:
+                            yoff = yoff - (line_width - non_bracket_br[3])
+                        else:
+                            yoff = yoff - (line_width - non_bracket_br[3]) / 2
+
                         # if char in PUNSET_BRACKETL:
-                        #     xoff = - act_rect[0]
-                        
+                        #     xoff =  act_rect[2]
+                        if char in PUNSET_BRACKETR:
+                            xoff =  act_rect[0]
 
                 else:
                     # other characters will simply be aligned center for this line
@@ -489,9 +495,18 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                     if char in PUNSET_EASTERN_VERTICAL:
                         yoff = -act_rect[1]
                         xoff = line_width - act_rect[2] - act_rect[0]
+                    
+                    
 
-
-
+                # else:
+                #     empty_spacing = num_lspaces * cfmt.space_width
+                #     if TEXTLAYOUT_QTVERSION:
+                #         xshift = max(line.naturalTextWidth() - cfmt.br.width(), 0)
+                #     else:
+                #         xshift = empty_spacing
+                        
+                #     xoff = -xshift
+                #     yoff = min(cfmt.br.top() - cfmt.tbr.top(), -cfmt.tbr.top() - line.ascent()) + empty_spacing
 
                 xy_offsets[0], xy_offsets[1] = xoff, yoff
             block = block.next()
@@ -743,35 +758,27 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                     if char.isalpha():
                         cw2 = cfmt.punc_rect(char+char)[1].width()
                         tbr_h = br.width() - (br.width() * 2 - cw2)
-
-                    #前后括号
-                    elif char in PUNSET_BRACKETR:
-                        tbr_h = line.naturalTextWidth()/4 + let_sp_offset
-                        single_char_h = tbr.width()/4
-
-                    elif char in PUNSET_BRACKETL:
-                        tbr_h = line.naturalTextWidth()/8
-                        single_char_h = tbr.width()/8
-                        
                     elif char in {'…', '⋯', '—', '～'}:
                         tbr_h = line.naturalTextWidth() - num_lspaces * space_w
                         next_char_idx = char_idx + 1
                         if next_char_idx < blk_text_len and blk_text[next_char_idx] == char:
                             tbr_h -= let_sp_offset
-                    
-            
-
                     else:
                         tbr_h = line.naturalTextWidth() - num_lspaces * space_w
+                    
+                    if char in PUNSET_BRACKETR:
+                        tbr_h = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)[3]*2/3
+
                     tbr_h += let_sp_offset
                 elif vertical_force_aligncentel(char):
                     if char not in PUNSET_ALIGNCENTER:
                         tbr_h = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)[3]
-                    elif char in PUNSET_EASTERN_VERTICAL:
-                        tbr_h = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)[3]
                     else:
                         tbr, br = cfmt.punc_rect(char)
                         tbr_h = tbr.height() + cfmt.font_metrics.descent()
+                    if char in PUNSET_EASTERN_VERTICAL:
+                        tbr_h = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)[3]/2
+
                     tbr_h += let_sp_offset
             elif char_idx - num_lspaces < blk_text_len:
                 cfmt = self.get_char_fontfmt(block_no, char_idx - num_lspaces)
