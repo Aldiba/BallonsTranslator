@@ -178,6 +178,11 @@ class ImgtransProgressMessageBox(ProgressMessageBox):
 
     def updateInpaintProgress(self, value: int, msg: str = ''):
         self.inpaint_bar.updateProgress(value, msg)
+    
+    # 新增：批量进度跟踪
+    def updateBatchInpaintProgress(self, current: int, total: int):
+        pct = int(current / total * 100) if total > 0 else 0
+        self.inpaint_bar.updateProgress(pct, f"{current}/{total}")
 
     def updateTranslateProgress(self, value: int, msg: str = ''):
         self.translate_bar.updateProgress(value, msg)
@@ -199,3 +204,32 @@ class ImgtransProgressMessageBox(ProgressMessageBox):
         self.ocr_bar.hide()
         self.translate_bar.hide()
         self.inpaint_bar.hide()
+
+    def updateOCRTaskProgress(self, task_id: str, current: int, total: int):
+        """
+        更新单个OCR任务进度
+        显示：task_id: 3/10
+        """
+        pct = int(current / total * 100) if total > 0 else 0
+        self.ocr_bar.updateProgress(pct, f"{task_id}: {current}/{total}")
+    
+    def updateOCRBatchProgress(self, current: int, total: int):
+        """
+        更新批量OCR进度
+        显示：OCR: 5/20
+        """
+        pct = int(current / total * 100) if total > 0 else 0
+        self.ocr_bar.updateProgress(pct, f"{current}/{total}")
+    
+    def showOCRQueueStatus(self, pending: int, running: int):
+        """
+        显示队列状态
+        pending: 待处理数量
+        running: 正在处理数量
+        """
+        if pending > 0 or running > 0:
+            self.ocr_bar.show()
+            status = f"队列: {running}运行中, {pending}等待"
+            self.ocr_bar.updateProgress(0, status)
+        else:
+            self.ocr_bar.hide()

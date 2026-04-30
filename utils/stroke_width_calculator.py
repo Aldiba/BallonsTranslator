@@ -65,7 +65,7 @@ def strokewidth_check(text_mask, labels, num_labels, stats, debug_type=0):
     rays_width = []
     height, width = text_mask.shape[0], text_mask.shape[1]
     
-    blur_img = cv2.dilate(text_mask ,(3,3),cv2.BORDER_DEFAULT)
+    blur_img = cv2.dilate(text_mask ,(3,3),cv2.BORDER_CONSTANT)
     
     # canny_img = cv2.Canny(cv2.dilate(text_mask, (3,3), 1), 170, 320, L2gradient=True, apertureSize=3)
     
@@ -88,7 +88,7 @@ def strokewidth_check(text_mask, labels, num_labels, stats, debug_type=0):
             labcord2 = (labcord[0] - y1, labcord[1] - x1)
             text_roi = np.zeros((y2-y1, x2-x1), dtype=np.uint8)
             text_roi[labcord2] = 255
-            text_roi = cv2.GaussianBlur(text_roi ,(3,3), cv2.BORDER_DEFAULT)
+            text_roi = cv2.GaussianBlur(text_roi ,(3,3), cv2.BORDER_CONSTANT, 0)
             ray_list = sw_calculator(text_roi,
                                     canny_img[y1: y2, x1: x2],
                                     gradient_x[y1: y2, x1: x2],

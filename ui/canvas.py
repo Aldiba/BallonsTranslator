@@ -2,9 +2,9 @@ import numpy as np
 from typing import List, Union
 import os
 
-from qtpy.QtWidgets import QApplication, QSlider, QMenu, QGraphicsScene, QGraphicsSceneDragDropEvent , QGraphicsView, QGraphicsSceneDragDropEvent, QGraphicsRectItem, QGraphicsItem, QScrollBar, QGraphicsPixmapItem, QGraphicsSceneMouseEvent, QGraphicsSceneContextMenuEvent, QRubberBand
+from qtpy.QtWidgets import QApplication, QSlider, QMenu, QGraphicsScene, QGraphicsSceneDragDropEvent , QGraphicsView, QGraphicsSceneDragDropEvent, QGraphicsRectItem, QGraphicsItem, QScrollBar, QGraphicsPixmapItem, QGraphicsSceneMouseEvent, QGraphicsSceneContextMenuEvent, QRubberBand, QGraphicsLineItem, QGraphicsPathItem
 from qtpy.QtCore import Qt, QDateTime, QRectF, QPointF, QPoint, Signal, QSizeF, QEvent
-from qtpy.QtGui import QKeySequence, QPixmap, QImage, QHideEvent, QKeyEvent, QWheelEvent, QResizeEvent, QPainter, QPen, QPainterPath, QCursor, QNativeGestureEvent
+from qtpy.QtGui import QKeySequence, QPixmap, QImage, QHideEvent, QKeyEvent, QWheelEvent, QResizeEvent, QPainter, QPen, QPainterPath, QCursor, QNativeGestureEvent, QColor
 
 try:
     from qtpy.QtWidgets import QUndoStack, QUndoCommand
@@ -24,6 +24,7 @@ from utils.proj_imgtrans import ProjImgTrans
 CANVAS_SCALE_MAX = 10.0
 CANVAS_SCALE_MIN = 0.01
 CANVAS_SCALE_SPEED = 0.1
+CANVAS_SCENE_MARGIN = 150  # 动态边距基础值（像素），会根据缩放级别自动调整
 
 class MoveByKeyCommand(QUndoCommand):
     def __init__(self, blkitems: List[TextBlkItem], direction: QPointF, shape_ctrl: TextBlkShapeControl) -> None:
@@ -93,6 +94,10 @@ class CustomGV(QGraphicsView):
         if event.key() == QKEY.Key_Control:
             self.ctrl_pressed = False
             self.ctrl_released.emit()
+        # Shift+拖拽画直线：Shift释放时取消画线状态
+        if event.key() == Qt.Key.Key_Shift and self.canvas.shift_line_start is not None:
+            self.canvas.shift_line_start = None
+            self.canvas._remove_line_preview()
         return super().keyReleaseEvent(event)
 
     def keyPressEvent(self, e: QKeyEvent) -> None:
@@ -235,6 +240,10 @@ class Canvas(QGraphicsScene):
         self.saved_drawundo_step = 0
         self.saved_textundo_step = 0
 
+# Shift+拖拽画直线功能
+        self.shift_line_start: QPointF = None  # 直线起点
+        self.shift_line_preview: QGraphicsPathItem = None  # 预览线（两条平行线）
+
         self.scaleFactorLabel = FadeLabel(self.gv)
         self.scaleFactorLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.scaleFactorLabel.setText('100%')
@@ -340,7 +349,11 @@ class Canvas(QGraphicsScene):
     def _set_scene_scale(self, scale: float):
         self.scale_factor = scale
         self.baseLayer.setScale(scale)
-        self.setSceneRect(0, 0, self.baseLayer.sceneBoundingRect().width(), self.baseLayer.sceneBoundingRect().height())
+        # 动态边距：缩放比例越大，边距越大，允许视角移动到边界外
+        margin = int(CANVAS_SCENE_MARGIN * scale)
+        base_w = self.baseLayer.sceneBoundingRect().width()
+        base_h = self.baseLayer.sceneBoundingRect().height()
+        self.setSceneRect(-margin, -margin, base_w + margin * 2, base_h + margin * 2)
 
     def render_result_img(self):
 
@@ -413,6 +426,10 @@ class Canvas(QGraphicsScene):
             painter.setOpacity(pcfg.mask_transparency)
             painter.drawPixmap(origin, ndarray2pixmap(self.imgtrans_proj.mask_array))
 
+        # # 修复：合并 drawingLayer 到 inpaintLayer，使画笔内容能被 inpaint 操作
+        # if self.drawingLayer.drawed():
+        #     painter.drawPixmap(origin, self.drawingLayer.get_drawed_pixmap())
+
         painter.end()
         self.inpaintLayer.setPixmap(pixmap)
 
@@ -446,7 +463,11 @@ class Canvas(QGraphicsScene):
             self.adjustScrollBar(self.gv.horizontalScrollBar(), factor)
             self.adjustScrollBar(self.gv.verticalScrollBar(), factor)
             self.scalefactor_changed.emit()
-        self.setSceneRect(0, 0, self.baseLayer.sceneBoundingRect().width(), self.baseLayer.sceneBoundingRect().height())
+        # 动态边距：缩放比例越大，边距越大，允许视角移动到边界外
+        margin = int(CANVAS_SCENE_MARGIN * self.scale_factor)
+        base_w = self.baseLayer.sceneBoundingRect().width()
+        base_h = self.baseLayer.sceneBoundingRect().height()
+        self.setSceneRect(-margin, -margin, base_w + margin * 2, base_h + margin * 2)
 
     def onViewResized(self):
         gv_w, gv_h = self.gv.geometry().width(), self.gv.geometry().height()
@@ -525,6 +546,92 @@ class Canvas(QGraphicsScene):
                 compose_mode = QPainter.CompositionMode.CompositionMode_DestinationOut
                 self.drawingLayer.addQImage(0, 0, self.stroke_img_item._img, compose_mode, self.erase_img_key)
 
+    def drawLineBetweenPoints(self, start: QPointF, end: QPointF):
+        """Shift+拖拽画直线：从start到end画一条直线"""
+        # 转换为 inpaintLayer 本地坐标（与普通绘制保持一致）
+        start_local = self.inpaintLayer.mapFromScene(start)
+        end_local = self.inpaintLayer.mapFromScene(end)
+        # 创建 StrokeImgItem，从起点开始
+        self.stroke_img_item = StrokeImgItem(self.painting_pen, start_local, self.img_window_size(), shape=self.painting_shape)
+        self.stroke_img_item.setParentItem(self.baseLayer)
+        # 调用 lineTo 画到终点
+        self.stroke_img_item.lineTo(end_local)
+        # 完成绘制
+        self.stroke_img_item.finishPainting()
+        # 触发 finish_painting 信号，交给 drawingpanel 处理撤销等
+        self.finish_painting.emit(self.stroke_img_item)
+        self.stroke_img_item = None
+
+    def _create_line_preview(self, start_scene: QPointF):
+        """创建直线预览（使用scene坐标，两条平行线表示笔刷宽度）"""
+        if self.shift_line_preview is None:
+            self.shift_line_preview = QGraphicsPathItem()
+            pen = QPen()
+            pen.setColor(QColor(0, 255, 255, 180))  # 青色带透明度
+            pen.setWidthF(1.5)
+            pen.setStyle(Qt.PenStyle.DashLine)
+            pen.setDashPattern([6, 4])
+            self.shift_line_preview.setPen(pen)
+            self.shift_line_preview.setZValue(999)
+            self.addItem(self.shift_line_preview)
+
+    def _update_line_preview(self, end_scene: QPointF):
+        """更新直线预览（使用scene坐标，两条平行线表示笔刷宽度）"""
+        if self.shift_line_preview is not None and self.shift_line_start is not None:
+            path = QPainterPath()
+
+            # 计算垂直于线段的偏移方向
+            dx = end_scene.x() - self.shift_line_start.x()
+            dy = end_scene.y() - self.shift_line_start.y()
+            length = (dx * dx + dy * dy) ** 0.5
+            if length < 1:
+                # 起点画笔刷形状
+                self._add_brush_shape_to_path(path, self.shift_line_start)
+                self.shift_line_preview.setPath(path)
+                return
+
+            # 法向量（垂直方向）
+            nx = -dy / length
+            ny = dx / length
+            brush_half = self.painting_pen.widthF() / 2
+
+            # 两条平行线的起点和终点
+            x1 = self.shift_line_start.x() + nx * brush_half
+            y1 = self.shift_line_start.y() + ny * brush_half
+            x2 = end_scene.x() + nx * brush_half
+            y2 = end_scene.y() + ny * brush_half
+            x3 = self.shift_line_start.x() - nx * brush_half
+            y3 = self.shift_line_start.y() - ny * brush_half
+            x4 = end_scene.x() - nx * brush_half
+            y4 = end_scene.y() - ny * brush_half
+
+            # 绘制两条平行线
+            path.moveTo(x1, y1)
+            path.lineTo(x2, y2)
+            path.moveTo(x3, y3)
+            path.lineTo(x4, y4)
+
+            # 起点画笔刷形状
+            self._add_brush_shape_to_path(path, self.shift_line_start)
+
+            self.shift_line_preview.setPath(path)
+
+    def _add_brush_shape_to_path(self, path: QPainterPath, center: QPointF):
+        """在路径中添加笔刷形状（起点和终点的轮廓）"""
+        brush_size = self.painting_pen.widthF()
+        half = brush_size / 2
+        if self.painting_shape == 0:  # Circle
+            # 画空心椭圆
+            path.addEllipse(center.x() - half, center.y() - half, brush_size, brush_size)
+        else:  # Rectangle
+            path.addRect(center.x() - half, center.y() - half, brush_size, brush_size)
+
+    def _remove_line_preview(self):
+        """移除直线预览"""
+        if self.shift_line_preview is not None:
+            self.removeItem(self.shift_line_preview)
+            self.shift_line_preview = None
+
     def startCreateTextblock(self, pos: QPointF, hide_control: bool = False):
         pos = pos / self.scale_factor
         self.creating_textblock = True
@@ -586,7 +693,10 @@ class Canvas(QGraphicsScene):
                 self.setSelectionArea(sel_path, deviceTransform=self.gv.viewportTransform())
             else:
                 self.setSelectionArea(sel_path, Qt.ItemSelectionMode.IntersectsItemBoundingRect, self.gv.viewportTransform())
-        
+
+        elif self.shift_line_preview is not None:
+            self._update_line_preview(event.scenePos())
+
         return super().mouseMoveEvent(event)
     
     @property
@@ -646,7 +756,17 @@ class Canvas(QGraphicsScene):
                 if self.scale_tool_mode:
                     self.begin_scale_tool.emit(event.scenePos())
                 elif self.painting:
-                    self.addStrokeImageItem(self.inpaintLayer.mapFromScene(event.scenePos()), self.painting_pen)
+                    shift_pressed = (event.modifiers() & Qt.KeyboardModifier.ShiftModifier)
+                    current_pos = self.inpaintLayer.mapFromScene(event.scenePos())
+
+                    # Shift+拖拽画直线
+                    if shift_pressed:
+                        self.shift_line_start = event.scenePos()
+                        self._create_line_preview(event.scenePos())
+                        return
+                    else:
+                        self._remove_line_preview()
+                        self.addStrokeImageItem(current_pos, self.painting_pen)
 
             elif btn == Qt.MouseButton.RightButton:
                 # user is drawing using eraser
@@ -683,7 +803,12 @@ class Canvas(QGraphicsScene):
             if self.textEditMode() and not textblk_created:
                 self.context_menu_requested.emit(event.screenPos(), False)
         if btn == Qt.MouseButton.LeftButton:
-            if self.stroke_img_item is not None:
+            if self.shift_line_start is not None:
+                # Shift+拖拽画直线：完成直线
+                self.drawLineBetweenPoints(self.shift_line_start, event.scenePos())
+                self._remove_line_preview()
+                self.shift_line_start = None
+            elif self.stroke_img_item is not None:
                 self.finish_painting.emit(self.stroke_img_item)
             elif self.scale_tool_mode:
                 self.end_scale_tool.emit()
@@ -709,7 +834,9 @@ class Canvas(QGraphicsScene):
             im_rect = pixmap.rect()
             self.baseLayer.setRect(QRectF(im_rect))
             if im_rect != self.sceneRect():
-                self.setSceneRect(0, 0, im_rect.width(), im_rect.height())
+                # 动态边距：缩放比例越大，边距越大，允许视角移动到边界外
+                margin = int(CANVAS_SCENE_MARGIN * max(self.scale_factor, 1.0))
+                self.setSceneRect(-margin, -margin, im_rect.width() + margin * 2, im_rect.height() + margin * 2)
             self.scaleImage(1)
 
         self.setDrawingLayer()

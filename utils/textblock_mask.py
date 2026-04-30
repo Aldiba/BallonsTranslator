@@ -84,7 +84,8 @@ def bground_calculator(buble_img, back_ground_mask, dilate=True):
     sd = -1
     if len(bground_region[0]) != 0:
         pix_array = buble_img[bground_region]
-        bground_aver = np.mean(pix_array, axis=0).astype(int)
+        # 修复：使用四舍五入替代截断，确保254.6→255而非→254
+        bground_aver = np.round(np.mean(pix_array, axis=0)).astype(np.uint8)
         pix_array - bground_aver
         gray = cv2.cvtColor(buble_img, cv2.COLOR_RGB2GRAY)
         gray_pixarray = gray[bground_region]
@@ -231,6 +232,14 @@ def connected_canny_flood(img, show_process=False, inpaint_sdthresh=10, apply_st
         drawtext = np.zeros((img.shape[0], img.shape[1]), np.uint8)
         
         max_ind = np.argmax(stats[:, 4])
+        # 修复：排除背景标签(0)，找最大前景连通区域
+        # 如果背景(标签0)面积最大，会导致mask计算错误
+        if len(stats) > 1:
+            foreground_stats = stats[1:]  # 排除标签0（背景）
+            if len(foreground_stats) > 0:
+                max_ind = np.argmax(foreground_stats[:, 4]) + 1  # 加1补偿标签偏移
+            else:
+                max_ind = 0
         maxbbox_area, sec_ind = -1, -1
         for ind, stat in enumerate(stats):
             if ind != max_ind:
@@ -336,7 +345,7 @@ def connected_canny_flood(img, show_process=False, inpaint_sdthresh=10, apply_st
 
     bground_aver, bground_region, sd = bground_calculator(img, bg_mask)
 
-    mask = cv2.GaussianBlur(text_mask,(3,3),cv2.BORDER_DEFAULT)
+    mask = cv2.GaussianBlur(text_mask,(3,3),cv2.BORDER_CONSTANT, 0)
     _, mask = cv2.threshold(mask, 1, 255, cv2.THRESH_BINARY)
     if sd != -1 and sd < inpaint_sdthresh:
         need_inpaint = False
@@ -371,7 +380,7 @@ def extract_ballon_mask(img: np.ndarray, mask: np.ndarray) -> Tuple[np.ndarray, 
     if len(img.shape) == 3 and img.shape[2] == 4:
         img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
         
-    img = cv2.GaussianBlur(img,(3,3),cv2.BORDER_DEFAULT)
+    img = cv2.GaussianBlur(img,(3,3),cv2.BORDER_CONSTANT, 0)
     h, w = img.shape[:2]
     text_sum = np.sum(mask)
     cannyed = cv2.Canny(img, 70, 140, L2gradient=True, apertureSize=3)

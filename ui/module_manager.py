@@ -3,6 +3,7 @@ from typing import Union, List, Dict, Callable
 import os.path as osp
 
 import numpy as np
+import cv2
 from qtpy.QtCore import QThread, Signal, QObject, QLocale, QTimer
 from qtpy.QtWidgets import QFileDialog
 
@@ -357,12 +358,18 @@ class ImgtransThread(QThread):
         if self.parallel_trans and cfg_module.enable_translate:
             self.translate_thread.runTranslatePipeline(self.imgtrans_proj)
 
+        # Cache frequently accessed flags to avoid repeated attribute lookups in loop
+        enable_detect = cfg_module.enable_detect
+        enable_ocr = cfg_module.enable_ocr
+        enable_translate = cfg_module.enable_translate
+        enable_inpaint = cfg_module.enable_inpaint
+
         for imgname in self.imgtrans_proj.pages:
             img = self.imgtrans_proj.read_img(imgname)
             mask = blk_list = None
             need_save_mask = False
             blk_removed: List[TextBlock] = []
-            if cfg_module.enable_detect:
+            if enable_detect:
                 try:
                     mask, blk_list = self.textdetector.detect(img, self.imgtrans_proj)
                     need_save_mask = True
@@ -375,10 +382,13 @@ class ImgtransThread(QThread):
                     blk_list = sort_regions(blk_list)
                     existed_mask = self.imgtrans_proj.load_mask_by_imgname(imgname)
                     if existed_mask is not None:
+                        # 修复：如果尺寸不一致，使用当前图像尺寸重新调整 existed_mask
+                        if existed_mask.shape != mask.shape:
+                            existed_mask = cv2.resize(existed_mask, (mask.shape[1], mask.shape[0]))
                         mask = np.bitwise_or(mask, existed_mask)
                 self.imgtrans_proj.pages[imgname] = blk_list
 
-                if mask is not None and not cfg_module.enable_ocr:
+                if mask is not None and not enable_ocr:
                     self.imgtrans_proj.save_mask(imgname, mask)
                     need_save_mask = False
                     
@@ -387,7 +397,7 @@ class ImgtransThread(QThread):
             if blk_list is None:
                 blk_list = self.imgtrans_proj.pages[imgname] if imgname in self.imgtrans_proj.pages else []
 
-            if cfg_module.enable_ocr:
+            if enable_ocr:
                 try:
                     self.ocr.run_ocr(img, blk_list)
                 except Exception as e:
@@ -411,7 +421,7 @@ class ImgtransThread(QThread):
                             mask = self.imgtrans_proj.load_mask_by_imgname(imgname)
                         if mask is not None:
                             inpainted = None
-                            if not cfg_module.enable_inpaint:
+                            if not enable_inpaint:
                                 inpainted = self.imgtrans_proj.load_inpainted_by_imgname(imgname)
                             for blk in blk_removed:
                                 xywh = blk.bounding_rect()
@@ -435,15 +445,15 @@ class ImgtransThread(QThread):
                 self.imgtrans_proj.save_mask(imgname, mask)
                 need_save_mask = False
 
-            if cfg_module.enable_translate:
+            if enable_translate:
                 if self.parallel_trans:
                     self.translate_thread.push_pagekey_queue(imgname)
                 elif not low_vram_trans:
                     self.translator.translate_textblk_lst(blk_list)
                     self.translate_counter += 1
                     self.update_translate_progress.emit(self.translate_counter)
-                        
-            if cfg_module.enable_inpaint:
+
+            if enable_inpaint:
                 if mask is None:
                     mask = self.imgtrans_proj.load_mask_by_imgname(imgname)
                     
@@ -460,7 +470,7 @@ class ImgtransThread(QThread):
                 if len(blk_removed) > 0:
                     self.imgtrans_proj.load_mask_by_imgname
         
-        if cfg_module.enable_translate and low_vram_trans:
+        if enable_translate and low_vram_trans:
             unload_modules(self, ['textdetector', 'inpainter', 'ocr'])
             for imgname in self.imgtrans_proj.pages:
                 blk_list = self.imgtrans_proj.pages[imgname]
@@ -544,6 +554,87 @@ class ModuleManager(QObject):
         self.imgtrans_proj = imgtrans_proj
         self.check_inpaint_fin_timer = QTimer(self)
         self.check_inpaint_fin_timer.timeout.connect(self.check_inpaint_th_finished)
+        self._ocr_worker = None
+        self._inpaint_worker = None
+        
+    def _create_ocr_worker(self):
+        """创建 OCR Worker"""
+        from ui.ocr_worker import OCRWorker
+        from utils.ocr_cache import OCRResultCache
+        
+        if self.ocr_thread.ocr:
+            self._ocr_worker = OCRWorker(self.ocr_thread.ocr)
+            
+            # 连接信号
+            self._ocr_worker.task_finished.connect(self._on_ocr_finished)
+            self._ocr_worker.task_failed.connect(self._on_ocr_failed)
+            self._ocr_worker.batch_progress.connect(self._on_ocr_batch_progress)
+    
+    def _on_ocr_batch_progress(self, current: int, total: int):
+        """批量 OCR 进度更新"""
+        if hasattr(self, 'progress_msgbox'):
+            self.progress_msgbox.updateOCRBatchProgress(current, total)
+    
+    def ocr_single_region(self, img, roi, vertical=False):
+        """OCR 单个区域"""
+        if self._ocr_worker is None:
+            self._create_ocr_worker()
+        
+        # 检查缓存
+        from utils.ocr_cache import OCRResultCache
+        cached = OCRResultCache.get(img, vertical, roi)
+        if cached:
+            self._on_ocr_finished({
+                'task_id': 'cached',
+                'text': cached['text'],
+                'conf': cached['conf'],
+                'roi': roi
+            })
+            return
+        
+        self._ocr_worker.add_task(
+            img=img,
+            roi=roi,
+            page_key=self.imgtrans_proj.current_img,
+            vertical=vertical,
+            priority=OCRTaskPriority.HIGH
+        )
+
+    def _create_inpaint_worker(self):
+        """创建异步工作器"""
+        from ui.inpaint_worker import InpaintWorker
+        if self.inpaint_thread.inpainter:
+            self._inpaint_worker = InpaintWorker(
+                self.inpaint_thread.inpainter
+            )
+            # 连接信号
+            self._inpaint_worker.task_finished.connect(self._on_inpaint_finished)
+            self._inpaint_worker.task_failed.connect(self._on_inpaint_failed)
+    
+    def canvas_inpaint_async(self, inpaint_dict):
+        """异步执行画布 inpaint"""
+        if self._inpaint_worker is None:
+            self._create_inpaint_worker()
+        
+        self._inpaint_worker.add_task(
+            img=inpaint_dict['img'],
+            mask=inpaint_dict['mask'],
+            inpaint_rect=inpaint_dict.get('inpaint_rect'),
+            priority=TaskPriority.HIGH  # 用户交互为高优先级
+        )
+    
+    def batch_inpaint(self, inpaint_list: List[dict]):
+        """批量 inpaint"""
+        if self._inpaint_worker is None:
+            self._create_inpaint_worker()
+        
+        for task in inpaint_list:
+            self._inpaint_worker.add_task(
+                img=task['img'],
+                mask=task['mask'],
+                inpaint_rect=task.get('rect'),
+                priority=TaskPriority.LOW  # 批量处理为低优先级
+            )
 
     def setupThread(self, config_panel: ConfigPanel, imgtrans_progress_msgbox: ImgtransProgressMessageBox, ocr_postprocess: Callable = None, translate_preprocess: Callable = None, translate_postprocess: Callable = None):
         self.textdetect_thread = TextDetectThread()

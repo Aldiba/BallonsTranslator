@@ -101,8 +101,17 @@ class StrokeImgItem(QGraphicsItem):
             self.painter.setPen(self.pen)
 
     def _line_to_rectangle(self, pnt1: QPointF, pnt2: QPointF):
-        shape_rect = QRectF(pnt1.x() - self._r, pnt1.y() - self._r, self._d, self._d)
-        self.painter.drawRect(shape_rect)
+        if pnt2 is not None:
+            # 画矩形条：从 pnt1 到 pnt2
+            min_x = min(pnt1.x(), pnt2.x()) - self._r
+            min_y = min(pnt1.y(), pnt2.y()) - self._r
+            width = abs(pnt2.x() - pnt1.x()) + self._d
+            height = abs(pnt2.y() - pnt1.y()) + self._d
+            self.painter.drawRect(QRectF(min_x, min_y, width, height))
+        else:
+            # 单个矩形（起点）
+            shape_rect = QRectF(pnt1.x() - self._r, pnt1.y() - self._r, self._d, self._d)
+            self.painter.drawRect(shape_rect)
 
     def lineTo(self, new_pnt: QPointF, update=True) -> QRectF:
         delta = self.cur_point - new_pnt

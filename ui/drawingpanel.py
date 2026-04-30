@@ -1,5 +1,5 @@
 from qtpy.QtCore import Signal, Qt, QPointF, QSize, QSizeF, QLineF, QRectF
-from qtpy.QtWidgets import QGridLayout, QPushButton, QComboBox, QSizePolicy, QBoxLayout, QCheckBox, QHBoxLayout, QGraphicsView, QStackedWidget, QVBoxLayout, QLabel, QGraphicsPixmapItem, QGraphicsEllipseItem
+from qtpy.QtWidgets import QGridLayout, QPushButton, QComboBox, QSizePolicy, QBoxLayout, QCheckBox, QHBoxLayout, QGraphicsView, QStackedWidget, QVBoxLayout, QLabel, QGraphicsPixmapItem, QGraphicsEllipseItem, QSpinBox
 from qtpy.QtGui import QPen, QColor, QCursor, QPainter, QPixmap, QBrush, QFontMetrics
 
 from typing import Union, Tuple, List
@@ -16,7 +16,7 @@ from .image_edit import ImageEditMode, PenShape, PixmapItem, StrokeImgItem
 from .configpanel import InpaintConfigPanel
 from .custom_widget import Widget, SeparatorWidget, PaintQSlider, ColorPickerLabel
 from .canvas import Canvas
-from .misc import ndarray2pixmap
+from .misc import ndarray2pixmap, pixmap2ndarray
 from utils.config import DrawPanelConfig, pcfg
 from utils.shared import CONFIG_COMBOBOX_SHORT, CONFIG_COMBOBOX_HEIGHT
 from utils.logger import logger as LOGGER
@@ -61,6 +61,7 @@ class ToolNameLabel(QLabel):
 class InpaintPanel(Widget):
 
     thicknessChanged = Signal(int)
+    alphaChanged = Signal(int)
 
     def __init__(self, inpainter_panel: InpaintConfigPanel, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -69,12 +70,39 @@ class InpaintPanel(Widget):
         self.thicknessSlider.setRange(MIN_PEN_SIZE, MAX_PEN_SIZE)
         self.thicknessSlider.valueChanged.connect(self.on_thickness_changed)
         self.thicknessSlider.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        
-        thickness_layout = QHBoxLayout()
+
+        self.thicknessSpinBox = QSpinBox()
+        self.thicknessSpinBox.setRange(MIN_PEN_SIZE, MAX_PEN_SIZE)
+        self.thicknessSpinBox.setFixedWidth(60)
+        self.thicknessSlider.valueChanged.connect(self.thicknessSpinBox.setValue)
+        self.thicknessSpinBox.valueChanged.connect(self.on_thicknessSpinBox_changed)
+        self.thicknessSpinBox.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+        thickness_header_layout = QHBoxLayout()
         thickness_label = ToolNameLabel(100, self.tr('Thickness'))
-        thickness_layout.addWidget(thickness_label)
-        thickness_layout.addWidget(self.thicknessSlider)
-        thickness_layout.setSpacing(10)
+        thickness_header_layout.addWidget(thickness_label)
+        thickness_header_layout.addWidget(self.thicknessSpinBox)
+        thickness_header_layout.addStretch()
+
+        self.alphaSlider = PaintQSlider()
+        self.alphaSlider.setRange(0, 255)
+        self.alphaSlider.setValue(255)
+        self.alphaSlider.valueChanged.connect(self.on_alpha_changed)
+        self.alphaSlider.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+        self.alphaSpinBox = QSpinBox()
+        self.alphaSpinBox.setRange(0, 255)
+        self.alphaSpinBox.setValue(255)
+        self.alphaSpinBox.setFixedWidth(60)
+        self.alphaSlider.valueChanged.connect(self.alphaSpinBox.setValue)
+        self.alphaSpinBox.valueChanged.connect(self.on_alphaSpinBox_changed)
+        self.alphaSpinBox.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+        alpha_header_layout = QHBoxLayout()
+        alpha_label = ToolNameLabel(100, self.tr('Alpha'))
+        alpha_header_layout.addWidget(alpha_label)
+        alpha_header_layout.addWidget(self.alphaSpinBox)
+        alpha_header_layout.addStretch()
 
         shape_label = ToolNameLabel(100, self.tr('Shape'))
         self.shapeCombobox = QComboBox(self)
@@ -95,13 +123,30 @@ class InpaintPanel(Widget):
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         layout.addLayout(inpaint_layout)
-        layout.addLayout(thickness_layout)
+        layout.addLayout(thickness_header_layout)
+        layout.addWidget(self.thicknessSlider)
+        layout.addLayout(alpha_header_layout)
+        layout.addWidget(self.alphaSlider)
         layout.addLayout(shape_layout)
         layout.setSpacing(14)
 
     def on_thickness_changed(self):
         if self.thicknessSlider.hasFocus():
             self.thicknessChanged.emit(self.thicknessSlider.value())
+
+    def on_thicknessSpinBox_changed(self, val):
+        if self.thicknessSpinBox.hasFocus():
+            self.thicknessSlider.setValue(val)
+            self.thicknessChanged.emit(val)
+
+    def on_alpha_changed(self):
+        if self.alphaSlider.hasFocus():
+            self.alphaChanged.emit(self.alphaSlider.value())
+
+    def on_alphaSpinBox_changed(self, val):
+        if self.alphaSpinBox.hasFocus():
+            self.alphaSlider.setValue(val)
+            self.alphaChanged.emit(val)
 
     def showEvent(self, e) -> None:
         self.inpaint_layout.addWidget(self.inpainter_panel.module_combobox)
@@ -118,6 +163,7 @@ class InpaintPanel(Widget):
 
 class PenConfigPanel(Widget):
     thicknessChanged = Signal(int)
+    alphaChanged = Signal(int)
     colorChanged = Signal(list)
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -125,27 +171,45 @@ class PenConfigPanel(Widget):
         self.thicknessSlider.setRange(MIN_PEN_SIZE, MAX_PEN_SIZE)
         self.thicknessSlider.valueChanged.connect(self.on_thickness_changed)
         self.thicknessSlider.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
+        self.thicknessSpinBox = QSpinBox()
+        self.thicknessSpinBox.setRange(MIN_PEN_SIZE, MAX_PEN_SIZE)
+        self.thicknessSpinBox.setFixedWidth(60)
+        self.thicknessSlider.valueChanged.connect(self.thicknessSpinBox.setValue)
+        self.thicknessSpinBox.valueChanged.connect(self.on_thicknessSpinBox_changed)
+        self.thicknessSpinBox.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
         self.alphaSlider = PaintQSlider()
         self.alphaSlider.setRange(0, 255)
         self.alphaSlider.setValue(255)
         self.alphaSlider.valueChanged.connect(self.on_alpha_changed)
 
+        self.alphaSpinBox = QSpinBox()
+        self.alphaSpinBox.setRange(0, 255)
+        self.alphaSpinBox.setFixedWidth(60)
+        self.alphaSlider.valueChanged.connect(self.alphaSpinBox.setValue)
+        self.alphaSpinBox.valueChanged.connect(self.on_alphaSpinBox_changed)
+        self.alphaSpinBox.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+
         self.colorPicker = ColorPickerLabel()
         self.colorPicker.colorChanged.connect(self.on_color_changed)
-        
+
         color_label = ToolNameLabel(None, self.tr('Color'))
-        alpha_label = ToolNameLabel(None, self.tr('Alpha'))
         color_layout = QHBoxLayout()
         color_layout.addWidget(color_label)
         color_layout.addWidget(self.colorPicker)
-        color_layout.addWidget(alpha_label)
-        color_layout.addWidget(self.alphaSlider)
-        
-        thickness_layout = QHBoxLayout()
+
+        thickness_header_layout = QHBoxLayout()
         thickness_label = ToolNameLabel(100, self.tr('Thickness'))
-        thickness_layout.addWidget(thickness_label)
-        thickness_layout.addWidget(self.thicknessSlider)
-        thickness_layout.setSpacing(10)
+        thickness_header_layout.addWidget(thickness_label)
+        thickness_header_layout.addWidget(self.thicknessSpinBox)
+        thickness_header_layout.addStretch()
+
+        alpha_header_layout = QHBoxLayout()
+        alpha_label = ToolNameLabel(100, self.tr('Alpha'))
+        alpha_header_layout.addWidget(alpha_label)
+        alpha_header_layout.addWidget(self.alphaSpinBox)
+        alpha_header_layout.addStretch()
 
         shape_label = ToolNameLabel(100, self.tr('Shape'))
         self.shapeCombobox = QComboBox(self)
@@ -162,7 +226,10 @@ class PenConfigPanel(Widget):
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         layout.addLayout(color_layout)
-        layout.addLayout(thickness_layout)
+        layout.addLayout(thickness_header_layout)
+        layout.addWidget(self.thicknessSlider)
+        layout.addLayout(alpha_header_layout)
+        layout.addWidget(self.alphaSlider)
         layout.addLayout(shape_layout)
         layout.setSpacing(20)
 
@@ -170,11 +237,27 @@ class PenConfigPanel(Widget):
         if self.thicknessSlider.hasFocus():
             self.thicknessChanged.emit(self.thicknessSlider.value())
 
+    def on_thicknessSpinBox_changed(self, val):
+        if self.thicknessSpinBox.hasFocus():
+            self.thicknessSlider.setValue(val)
+            self.thicknessChanged.emit(val)
+
     def on_alpha_changed(self):
-        color = self.colorPicker.rgba()
-        color = [color[0], color[1], color[2], self.alphaSlider.value()]
-        self.colorPicker.setPickerColor(color)
-        self.colorChanged.emit(color)
+        if self.alphaSlider.hasFocus():
+            self.alphaChanged.emit(self.alphaSlider.value())
+            color = self.colorPicker.rgba()
+            color = [color[0], color[1], color[2], self.alphaSlider.value()]
+            self.colorPicker.setPickerColor(color)
+            self.colorChanged.emit(color)
+
+    def on_alphaSpinBox_changed(self, val):
+        if self.alphaSpinBox.hasFocus():
+            self.alphaSlider.setValue(val)
+            self.alphaChanged.emit(val)
+            color = self.colorPicker.rgba()
+            color = [color[0], color[1], color[2], val]
+            self.colorPicker.setPickerColor(color)
+            self.colorChanged.emit(color)
 
     def on_color_changed(self):
         color = self.colorPicker.rgba()
@@ -649,6 +732,18 @@ class DrawingPanel(Widget):
             mask_h, mask_w = mask.shape[:2]
             mask_x, mask_y = rect[0], rect[1]
             img = self.canvas.imgtrans_proj.inpainted_array
+            # 修复：如果 drawingLayer 有内容，合并到 img 再进行 inpaint
+            if self.canvas.drawingLayer.drawed():
+                drawn_pixmap = self.canvas.drawingLayer.get_drawed_pixmap()
+                drawn_array = pixmap2ndarray(drawn_pixmap, keep_alpha=True)
+                # 确保尺寸一致后再合并
+                if drawn_array.shape[:2] == img.shape[:2]:
+                    # 使用 alpha 通道作为混合权重，将 drawingLayer 内容混合到 img
+                    if drawn_array.shape[2] == 4:  # RGBA
+                        alpha = drawn_array[..., 3:4].astype(np.float32) / 255.0
+                        img = (img.astype(np.float32) * (1 - alpha) + drawn_array.astype(np.float32)[..., :3] * alpha).astype(np.uint8)
+                    else:  # RGB
+                        img = drawn_array[..., :3]
             inpaint_rect = [mask_x, mask_y, mask_w + mask_x, mask_h + mask_y]
             rect_enlarged = enlarge_window(inpaint_rect, img.shape[1], img.shape[0])
             top = mask_y - rect_enlarged[1]
@@ -671,6 +766,8 @@ class DrawingPanel(Widget):
         mask = cv2.bitwise_or(inpaint_dict['mask'], mask_array[inpaint_rect[1]: inpaint_rect[3], inpaint_rect[0]: inpaint_rect[2]])
         self.canvas.push_undo_command(InpaintUndoCommand(self.canvas, inpainted, mask, inpaint_rect))
         self.clearInpaintItems()
+        # # 修复：inpaint 完成后清空 drawingLayer，因为内容已合并到 inpainted_array
+        # self.canvas.drawingLayer.clearAllDrawings()
 
     def on_inpaint_failed(self):
         if self.currentTool == self.inpaintTool and self.inpaint_stroke is not None:

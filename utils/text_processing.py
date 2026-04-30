@@ -40,19 +40,21 @@ def seg_to_chars(text: str) -> List[str]:
 
 def seg_eng(text: str) -> List[str]:
     text = text.replace('  ', ' ').replace(' .', '.').replace('\n', ' ')
-    processed_text = ''
 
     # dumb way to insure spaces between words
     text_len = len(text)
+    parts = []
     for ii, c in enumerate(text):
         if c in PUNSET_RIGHT_ENG and ii < text_len - 1:
             next_c = text[ii + 1]
             if next_c.isalpha() or next_c.isnumeric():
-                processed_text += c + ' '
+                parts.append(c + ' ')
             else:
-                processed_text += c
+                parts.append(c)
         else:
-            processed_text += c
+            parts.append(c)
+
+    processed_text = ''.join(parts)
 
     word_list = processed_text.split(' ')
     word_num = len(word_list)

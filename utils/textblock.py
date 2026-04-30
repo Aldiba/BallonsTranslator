@@ -672,11 +672,12 @@ def merge_textlines(blk_list: List[TextBlock], canvas=None, fntsize_tol=1.7) -> 
     if len(blk_list) < 2:
         return blk_list
     merged_list = []
-    for ii, current_blk in enumerate(blk_list):
+    for ii in range(len(blk_list)):
+        current_blk = blk_list[ii]
         if current_blk.merged:
             continue
-        for jj, blk in enumerate(blk_list[ii+1:]):
-            try_merge_textline(current_blk, blk, canvas=canvas, fntsize_tol=fntsize_tol)
+        for jj in range(ii + 1, len(blk_list)):
+            try_merge_textline(current_blk, blk_list[jj], canvas=canvas, fntsize_tol=fntsize_tol)
         merged_list.append(current_blk)
     for blk in merged_list:
         blk.adjust_bbox(with_bbox=False)
