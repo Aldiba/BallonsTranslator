@@ -725,10 +725,11 @@ class VerticalTextDocumentLayout(SceneTextLayout):
             line = layout.lineForTextPosition(cpos)
             if line.isValid():
                 
-                pos = line.position()                
+                pos = line.position()
                 x, y = pos.x(), pos.y()
+                fm = QFontMetricsF(block.charFormat().font())
                 if line.textLength() == 0:
-                    fm = QFontMetricsF(block.charFormat().font())
+                    pass
                 else:
                     num_rspaces, num_lspaces, char_yoffset_lst, line_pos = self.line_spaces_lst[blk_no][line.lineNumber()]
                     yidx = cpos - line_pos
@@ -736,7 +737,8 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                         y = char_yoffset_lst[yidx]
 
                 painter.setCompositionMode(QPainter.CompositionMode.RasterOp_NotDestination)
-                painter.fillRect(QRectF(x, y, fm.height(), 2), painter.pen().brush())
+                if 'fm' in locals():
+                    painter.fillRect(QRectF(x, y, fm.height(), 2), painter.pen().brush())
                 if self.has_selection == has_selection:
                     if C.USE_PYSIDE6:
                         self.update.emit()
