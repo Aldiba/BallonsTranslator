@@ -230,13 +230,12 @@ class AOTInpainter(InpainterBase):
 
     params = {
         'inpaint_size': {
-            'type': 'selector',
-            'options': [
-                1024, 
-                2048
-            ], 
-            'value': 2048
-        }, 
+            'type': 'slider',
+            'min': 256,
+            'max': 4096,
+            'step': 64,
+            'value': 2048,
+        },
         'device': DEVICE_SELECTOR(),
         'description': 'manga-image-translator inpainter'
     }
@@ -335,12 +334,11 @@ class LamaInpainterMPE(InpainterBase):
 
     params = {
         'inpaint_size': {
-            'type': 'selector',
-            'options': [
-                1024, 
-                2048
-            ], 
-            'value': 2048
+            'type': 'slider',
+            'min': 256,
+            'max': 4096,
+            'step': 64,
+            'value': 2048,
         },
         'device': DEVICE_SELECTOR(not_supported=['privateuseone'])
     }
@@ -456,14 +454,10 @@ class LamaLarge(LamaInpainterMPE):
 
     params = {
         'inpaint_size': {
-            'type': 'selector',
-            'options': [
-                512,
-                768,
-                1024,
-                1536, 
-                2048
-            ], 
+            'type': 'slider',
+            'min': 256,
+            'max': 4096,
+            'step': 64,
             'value': 1536,
         },
         'device': DEVICE_SELECTOR(not_supported=['privateuseone']),

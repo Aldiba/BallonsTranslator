@@ -37,7 +37,7 @@ from .framelesswindow import FramelessWindow, FramelessMoveResize
 from .drawing_commands import RunBlkTransCommand
 from .keywordsubwidget import KeywordSubWidget
 from . import shared_widget as SW
-from .custom_widget import MessageBox, FrameLessMessageBox, ImgtransProgressMessageBox
+from .custom_widget import MessageBox, FrameLessMessageBox, ImgtransProgressMessageBox, ProgressMessageBox
 
 class PageListView(QListWidget):
 
@@ -143,6 +143,7 @@ class MainWindow(mainwindow_cls):
         self.leftBar.open_dir.connect(self.OpenProj)
         self.leftBar.open_json_proj.connect(self.openJsonProj)
         self.leftBar.save_proj.connect(self.manual_save)
+        self.leftBar.save_all_pages.connect(self.on_save_all_pages)
         self.leftBar.export_doc.connect(self.on_export_doc)
         self.leftBar.import_doc.connect(self.on_import_doc)
         self.leftBar.export_src_txt.connect(lambda : self.on_export_txt(dump_target='source'))
@@ -150,6 +151,7 @@ class MainWindow(mainwindow_cls):
         self.leftBar.export_src_md.connect(lambda : self.on_export_txt(dump_target='source', suffix='.md'))
         self.leftBar.export_trans_md.connect(lambda : self.on_export_txt(dump_target='translation', suffix='.md'))
         self.leftBar.import_trans_txt.connect(self.on_import_trans_txt)
+        self.leftBar.import_translation_script.connect(self.on_import_translation_script)
 
         self.pageList = PageListView()
         self.pageList.reveal_file.connect(self.on_reveal_file)
@@ -885,6 +887,74 @@ class MainWindow(mainwindow_cls):
             LOGGER.debug('Manually saving...')
             self.saveCurrentPage(update_scene_text=True, save_proj=True, restore_interface=True, save_rst_only=False)
 
+    def on_save_all_pages(self):
+        if not self.imgtrans_proj.directory or self.imgtrans_proj.is_empty:
+            create_info_dialog(self.tr('No project loaded.'))
+            return
+
+        # 保存项目 JSON
+        try:
+            self.imgtrans_proj.save()
+        except Exception as e:
+            create_error_dialog(e, self.tr('Failed to save project'))
+            return
+
+        result_dir = self.imgtrans_proj.result_dir()
+        if not osp.exists(result_dir):
+            os.makedirs(result_dir)
+
+        n_pages = self.imgtrans_proj.num_pages
+        cur_idx = self.imgtrans_proj.current_idx
+        saved = 0
+        failed = []
+
+        # 显示进度对话框
+        progress_box = ProgressMessageBox(self.tr('Saving: '))
+        progress_box.setWindowTitle(self.tr('Save All Pages'))
+        progress_box.show()
+
+        # 先把当前页的文本更新落盘
+        self.st_manager.updateTextBlkList()
+
+        for i in range(n_pages):
+            try:
+                self.imgtrans_proj.set_current_img_byidx(i)
+                self.canvas.updateCanvas()
+                self.st_manager.updateSceneTextitems()
+                self.titleBar.setTitleContent(page_name=self.imgtrans_proj.current_img)
+
+                img = self.canvas.render_result_img()
+                imsave_path = self.imgtrans_proj.get_result_path(self.imgtrans_proj.current_img)
+                self.imsave_thread.saveImg(
+                    imsave_path, img, self.imgtrans_proj.current_img,
+                    save_params={'ext': pcfg.imgsave_ext, 'quality': pcfg.imgsave_quality},
+                    keep_alpha=self.imgtrans_proj.current_has_alpha())
+                saved += 1
+            except Exception as e:
+                failed.append(self.imgtrans_proj.current_img)
+                LOGGER.error(f'Failed to save {self.imgtrans_proj.current_img}: {e}')
+
+            pct = int((i + 1) / n_pages * 100)
+            progress_box.updateTaskProgress(pct, f'{saved}/{n_pages}')
+            QApplication.processEvents()
+
+        progress_box.close()
+
+        # 恢复原来页面
+        self.imgtrans_proj.set_current_img_byidx(cur_idx)
+        self.canvas.clear_undostack(update_saved_step=True)
+        self.canvas.updateCanvas()
+        self.st_manager.updateSceneTextitems()
+        self.titleBar.setTitleContent(page_name=self.imgtrans_proj.current_img)
+
+        msg = self.tr(f'Saved {saved}/{n_pages} pages.')
+        if failed:
+            msg += '\n' + self.tr('Failed pages:') + '\n' + '\n'.join(failed)
+            LOGGER.warning(f'Save all pages completed with errors: {failed}')
+        else:
+            LOGGER.info(f'All {n_pages} pages saved successfully.')
+        create_info_dialog(msg)
+
     def saveCurrentPage(self, update_scene_text=True, save_proj=True, restore_interface=False, save_rst_only=False, keep_exist_as_backup=False):
         
         if not self.imgtrans_proj.img_valid:
@@ -1403,6 +1473,56 @@ class MainWindow(mainwindow_cls):
 
         except Exception as e:
             create_error_dialog(e, self.tr('Failed to import translation from ') + selected_file)
+
+    def on_import_translation_script(self):
+        """
+        导入 translations.txt 格式的翻译脚本
+        根据脚本中的坐标和文本创建新的 TextBlock，text 为空，translation 为脚本内容
+        """
+        try:
+            from utils.config import text_styles, active_format
+            selected_file = ''
+            dialog = QFileDialog()
+            selected_file = str(dialog.getOpenFileUrl(self.parent(), self.tr('Import Translation Script'), filter="*.txt")[0].toLocalFile())
+            if not osp.exists(selected_file):
+                return
+
+            LOGGER.info(f'Importing translation script from: {selected_file}')
+
+            # 获取当前选中的字体样式作为默认值
+            fontformat = None
+            if active_format is not None:
+                fontformat = active_format
+
+            all_matched, match_rst = self.imgtrans_proj.load_translation_from_custom_txt(selected_file, fontformat=fontformat)
+            matched_pages = match_rst['matched_pages']
+
+            LOGGER.info(f'Matched pages: {matched_pages}')
+            LOGGER.info(f'Unexpected pages: {match_rst["unexpected_pages"]}')
+            LOGGER.info(f'Current page: {self.imgtrans_proj.current_img}')
+            LOGGER.info(f'Pages with blocks: {[k for k, v in self.imgtrans_proj.pages.items() if len(v) > 0]}')
+
+            if matched_pages:
+                self.canvas.clear_undostack(update_saved_step=True)
+                self.st_manager.updateSceneTextitems()
+
+            if all_matched:
+                msg = self.tr('Translation script imported successfully.')
+            else:
+                msg = self.tr('Translation script imported with some issues:')
+                if len(match_rst['unexpected_pages']) > 0:
+                    msg += '\n' + self.tr('Pages not found in project: ') + '\n'
+                    msg += '\n'.join(match_rst['unexpected_pages'])
+                msg = msg.strip()
+                LOGGER.warning(msg)
+
+            create_info_dialog(msg)
+
+        except Exception as e:
+            LOGGER.error(f'Failed to import translation script: {e}')
+            import traceback
+            LOGGER.error(traceback.format_exc())
+            create_error_dialog(e, self.tr('Failed to import translation script'))
 
     def on_reveal_file(self):
         current_img_path = self.imgtrans_proj.current_img_path()

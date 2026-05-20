@@ -3,7 +3,7 @@ from typing import List, Callable
 from modules import GET_VALID_INPAINTERS, GET_VALID_TEXTDETECTORS, GET_VALID_TRANSLATORS, GET_VALID_OCR, \
     BaseTranslator, DEFAULT_DEVICE, GPUINTENSIVE_SET
 from utils.logger import logger as LOGGER
-from .custom_widget import ConfigComboBox, ParamComboBox, NoBorderPushBtn, ParamNameLabel
+from .custom_widget import ConfigComboBox, ParamComboBox, NoBorderPushBtn, ParamNameLabel, ParamSlider
 from utils.shared import CONFIG_COMBOBOX_LONG, size2width, CONFIG_COMBOBOX_SHORT, CONFIG_COMBOBOX_HEIGHT
 from utils.config import pcfg
 
@@ -197,6 +197,15 @@ class ParamWidget(QWidget):
                                 item.setEnabled(False)
                     param_widget.setCurrentText(str(value))
                     param_widget.setEditable(param_dict.get('editable', False))
+
+                elif param_type == 'slider':
+                    param_widget = ParamSlider(
+                        param_key,
+                        min_val=param_dict.get('min', 0),
+                        max_val=param_dict.get('max', 100),
+                        step=param_dict.get('step', 1),
+                        value=int(value),
+                    )
 
                 elif param_type == 'editor':
                     param_widget = ParamEditor(param_key)

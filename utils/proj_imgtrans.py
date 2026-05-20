@@ -48,6 +48,77 @@ def read_jpg_metadata(imgpath: str):
 page_start_pattern = re.compile(r'^###\s+', re.MULTILINE)
 text_blkid_start_pattern = re.compile(r'^\d+\.', re.MULTILINE)
 
+# 匹配 translations.txt 的页面分隔符，如 >>>>>>>>[img.jpg]<<<<<<<<
+custom_page_start_pattern = re.compile(r'^[<>]+\[([^\]]+)\][<>]+$')
+# 匹配文本框元数据，如 ----------------[1]----------------[0.868702839083807,0.23646357785781572,1]
+custom_blkid_start_pattern = re.compile(r'^-+\[(\d+)\]-+\[([\d.]+),([\d.]+),(\d+)\]$')
+
+def parse_custom_translation(file_path: str):
+    """
+    解析 translations.txt 格式的文件，返回页面列表
+    
+    格式示例：
+        >>>>>>>>[img.jpg]<<<<<<<<
+        ----------------[1]----------------[0.868702839083807,0.23646357785781572,1]
+        感谢惠顾
+        ----------------[2]----------------[0.6736982429368669,0.22211696315509208,2]
+        嘎…
+    """
+    with open(file_path, 'r', encoding='utf8') as f:
+        content = f.read()
+    
+    lines = content.split('\n')
+    page_list = []
+    current_page = None
+    current_entries = []
+    
+    for line in lines:
+        stripped = line.strip()
+        # 检查是否是页面分隔符 >>>>>>>>[img.jpg]<<<<<<<<
+        match = re.match(custom_page_start_pattern, stripped)
+        if match:
+            # 保存当前页面
+            if current_page is not None:
+                page_list.append({'page_name': current_page, 'entries': current_entries})
+            # 提取页面名称
+            current_page = match.group(1)
+            current_entries = []
+            continue
+        
+        # 检查是否是文本框元数据行 ----------------[1]----------------[0.868702839083807,0.23646357785781572,1]
+        match = re.match(custom_blkid_start_pattern, stripped)
+        if match is None and stripped.startswith('-'):
+            LOGGER.debug(f'Block pattern NOT matched for line: {repr(stripped)}')
+        if match:
+            # 开始新的文本框
+            entry = {
+                'block_id': int(match.group(1)),
+                'x': float(match.group(2)),
+                'y': float(match.group(3)),
+                'type': int(match.group(4)),
+                'text': ''
+            }
+            current_entries.append(entry)
+        elif current_entries:
+            # 如果当前有正在收集的文本框，追加这一行
+            if current_entries[-1]['text']:
+                current_entries[-1]['text'] += '\n' + stripped
+            else:
+                current_entries[-1]['text'] = stripped
+    
+    # 保存最后一页
+    if current_page is not None:
+        page_list.append({'page_name': current_page, 'entries': current_entries})
+    
+    LOGGER.info(f'parse_custom_translation: parsed {len(page_list)} pages')
+    for p in page_list:
+        LOGGER.info(f'  Page: {p["page_name"]}, entries: {len(p["entries"])}')
+        for e in p['entries']:
+            LOGGER.info(f'    Entry {e["block_id"]}: x={e["x"]}, y={e["y"]}, text="{e["text"][:30]}..."')
+    
+    return page_list
+
+
 def parse_txt_translation(file_path: str):
     with open(file_path, 'r', encoding='utf8') as f:
         content = f.read()
@@ -224,6 +295,125 @@ class ProjImgTrans:
         
         all_matched = len(missing_pages) == 0 and len(unmatched_pages) == 0 and len(unexpected_pages) == 0
         return all_matched, {'missing_pages': missing_pages, 'unmatched_pages': unmatched_pages, 'unexpected_pages': unexpected_pages, 'matched_pages': matched_pages}
+
+    def load_translation_from_custom_txt(self, file_path: str, fontformat: 'FontFormat' = None, width_coef: float = 0.6):
+        """
+        从 translations.txt 格式的文件加载翻译，创建新的 TextBlock
+        用于导入只有翻译文本但有坐标的脚本（如 LabelPlus 导出的翻译）
+        
+        Args:
+            file_path: translations.txt 文件路径
+            fontformat: 使用的字体格式（如果为 None，使用默认 FontFormat）
+            width_coef: 宽度估算系数（字数 * font_size * width_coef）
+        
+        Returns:
+            (all_matched, match_rst) 结构与 load_translation_from_txt 相同
+        """
+        from .fontformat import FontFormat
+        
+        page_list = parse_custom_translation(file_path)
+        missing_pages = []
+        unexpected_pages = []
+        matched_pages = []
+        
+        # 获取默认字体格式
+        if fontformat is None:
+            fontformat = FontFormat()
+        
+        for page_dict in page_list:
+            page_name = page_dict['page_name']
+            
+            # 尝试匹配页面名称（处理 translations.txt 使用 .jpg 而项目使用 .png 的情况）
+            matched_page_name = None
+            if page_name in self.pages:
+                matched_page_name = page_name
+            else:
+                # 尝试模糊匹配：去掉扩展名或替换扩展名
+                import os.path as osp_base
+                name_without_ext = osp_base.splitext(page_name)[0]
+                for proj_page in self.pages.keys():
+                    proj_name_without_ext = osp_base.splitext(proj_page)[0]
+                    # 检查基础名是否相同（例如 img0001 和 img0001）
+                    if name_without_ext == proj_name_without_ext:
+                        matched_page_name = proj_page
+                        break
+                    # 尝试截断匹配（例如 img.jpg 匹配 img0000.png）
+                    if name_without_ext.startswith('img') and proj_name_without_ext.startswith('img'):
+                        # 提取数字部分进行比较
+                        try:
+                            txt_num = int(name_without_ext.replace('img', ''))
+                            proj_num = int(proj_name_without_ext.replace('img', ''))
+                            if txt_num == proj_num:
+                                matched_page_name = proj_page
+                                break
+                        except:
+                            pass
+            
+            if matched_page_name is None:
+                unexpected_pages.append(page_name)
+                continue
+            
+            matched_pages.append(matched_page_name)
+            # 清空该页原有 blocks，避免重复导入导致累积
+            self.pages[matched_page_name] = []
+            blklist = self.pages[matched_page_name]
+            entries = page_dict['entries']
+            
+            # 获取当前页图片尺寸
+            img_path = osp.join(self.directory, matched_page_name)
+            if osp.exists(img_path):
+                from PIL import Image
+                img = Image.open(img_path)
+                im_w, im_h = img.width, img.height
+            else:
+                # 如果图片不存在，使用默认值
+                im_w, im_h = 1920, 1080
+            
+            # 为每个条目创建新的 TextBlock
+            for entry in entries:
+                # 计算边界框
+                x = entry['x'] * im_w
+                y = entry['y'] * im_h
+
+                # 根据字体样式和文本内容估算文本框尺寸
+                text = entry['text']
+                lines = text.split('\n')
+                max_line_len = max(len(line) for line in lines) if lines else 0
+                n_lines = len(lines)
+
+                if fontformat.vertical:
+                    # 竖排文字：按列排列，宽度≈列数×字宽，高度≈最长列×字高×行距
+                    est_width = max(int(n_lines * fontformat.font_size * 1.4), 30)
+                    est_height = max(int(max_line_len * fontformat.font_size * fontformat.line_spacing), fontformat.font_size)
+                else:
+                    # 横排文字：宽度≈最长行字数×字宽×系数，高度≈行数×字高×行距
+                    est_width = max(int(max_line_len * fontformat.font_size * width_coef), 50)
+                    est_height = max(int(n_lines * fontformat.font_size * fontformat.line_spacing), fontformat.font_size)
+
+                # 创建 TextBlock
+                blk = TextBlock(
+                    xyxy=[int(x), int(y), int(x + est_width), int(y + est_height)],
+                    text="",
+                    translation=text,
+                    fontformat=FontFormat(**vars(fontformat))
+                )
+                # 同时设置 lines 和 _bounding_rect，确保不论哪种方式都能正确计算边界
+                xywh = [int(x), int(y), int(est_width), int(est_height)]
+                blk.set_lines_by_xywh(xywh)
+                blk._bounding_rect = xywh
+                blklist.append(blk)
+        
+        all_matched = len(missing_pages) == 0 and len(unexpected_pages) == 0
+        
+        # 保存项目文件（新增了 TextBlock，需要写入磁盘）
+        if matched_pages:
+            self.save()
+        
+        return all_matched, {
+            'missing_pages': missing_pages,
+            'unexpected_pages': unexpected_pages, 
+            'matched_pages': matched_pages
+        }
 
     def load_from_json(self, json_path: str):
         old_dir = self.directory

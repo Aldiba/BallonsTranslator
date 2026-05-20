@@ -386,7 +386,7 @@ class Canvas(QGraphicsScene):
         rect = QRectF(0, 0, canvas_sz.width(), canvas_sz.height())
         self.render(painter, rect, rect)   #  produce blurred result if target/source rect not specified #320
         painter.end()
-        
+
         if tlayer_opacity_before != 1:
             self.textLayer.setOpacity(tlayer_opacity_before)
         if not tlayer_visible:

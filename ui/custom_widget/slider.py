@@ -1,4 +1,4 @@
-from qtpy.QtWidgets import QWidget, QStyle, QSlider, QStyle, QStyleOptionSlider
+from qtpy.QtWidgets import QWidget, QStyle, QSlider, QStyle, QStyleOptionSlider, QLabel, QHBoxLayout
 from qtpy.QtCore import  Qt, QPropertyAnimation, QRect, QRectF, Signal, QPoint, Property
 from qtpy.QtGui import QFontMetrics, QMouseEvent, QPainter, QFontMetrics, QColor
 
@@ -245,3 +245,46 @@ class PaintQSlider(Slider):
             self.pressed = False
             self.mouse_released.emit()
         return super().mouseReleaseEvent(event)
+
+
+class ParamSlider(QWidget):
+    """Slider widget for integer parameters, emits paramwidget_edited on change."""
+
+    paramwidget_edited = Signal(str, str)
+
+    def __init__(self, param_key: str, min_val: int, max_val: int, step: int, value: int, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.param_key = param_key
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        self.slider = PaintQSlider(orientation=Qt.Orientation.Horizontal)
+        self.slider.setMinimum(min_val)
+        self.slider.setMaximum(max_val)
+        self.slider.setSingleStep(step)
+        self.slider.setPageStep(step * 5)
+        self.slider.setFixedWidth(200)
+        self.slider.setValue(value)
+
+        self.value_label = QLabel(str(value))
+        self.value_label.setFixedWidth(50)
+
+        layout.addWidget(self.slider)
+        layout.addWidget(self.value_label)
+
+        self.slider.valueChanged.connect(self.on_value_changed)
+
+    def on_value_changed(self, value: int):
+        step = self.slider.singleStep()
+        snapped = round(value / step) * step
+        if snapped != value:
+            self.slider.blockSignals(True)
+            self.slider.setValue(snapped)
+            self.slider.blockSignals(False)
+        self.value_label.setText(str(snapped))
+        self.paramwidget_edited.emit(self.param_key, str(snapped))
+
+    def setValue(self, value: int):
+        self.slider.setValue(value)
+        self.value_label.setText(str(value))

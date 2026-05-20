@@ -96,6 +96,9 @@ class LeftBar(Widget):
         self.save_proj = actionSaveProj.triggered
         actionSaveProj.setShortcut(QKeySequence.StandardKey.Save)
 
+        actionSaveAllPages = QAction(self.tr("Save All Pages"), self)
+        self.save_all_pages = actionSaveAllPages.triggered
+
         actionExportAsDoc = QAction(self.tr("Export as Doc"), self)
         self.export_doc = actionExportAsDoc.triggered
         actionImportFromDoc = QAction(self.tr("Import from Doc"), self)
@@ -114,6 +117,9 @@ class LeftBar(Widget):
         actionImportTranslationTxt = QAction(self.tr("Import translation from TXT/markdown"), self)
         self.import_trans_txt = actionImportTranslationTxt.triggered
 
+        actionImportTranslationScript = QAction(self.tr("Import translation script"), self)
+        self.import_translation_script = actionImportTranslationScript.triggered
+
         self.recentMenu = QMenu(self.tr("Open Recent"), self)
         
         openMenu = QMenu(self)
@@ -122,6 +128,7 @@ class LeftBar(Widget):
         openMenu.addSeparator()
         openMenu.addActions([
             actionSaveProj,
+            actionSaveAllPages,
             actionExportAsDoc,
             actionImportFromDoc,
             actionExportSrcTxt,
@@ -129,6 +136,7 @@ class LeftBar(Widget):
             actionExportSrcMD,
             actionExportTranslationMD,
             actionImportTranslationTxt,
+            actionImportTranslationScript,
         ])
         self.openBtn = OpenBtn()
         self.openBtn.setFixedSize(LEFTBTN_WIDTH, LEFTBTN_WIDTH)
