@@ -4,1271 +4,1545 @@
   <context>
     <name>BottomBar</name>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="563"/>
-      <source>translate page</source>
-      <translation>Traduzir página</translation>
+      <location filename="..\ui\mainwindowbars.py" line="658" />
+      <source>Text Detector</source>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="564"/>
-      <source>stop</source>
-      <translation>Parar</translation>
+      <location filename="..\ui\mainwindowbars.py" line="659" />
+      <source>OCR</source>
+      <translation type="unfinished">OCR</translation>
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="565"/>
-      <source>translate current page</source>
-      <translation>Traduzir página atual</translation>
+      <location filename="..\ui\mainwindowbars.py" line="660" />
+      <source>Inpaint</source>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="566"/>
-      <source>stop translation</source>
-      <translation>Parar tradução</translation>
-    </message>
-    <message>
-      <location filename="..\ui\mainwindowbars.py" line="573"/>
+      <location filename="..\ui\mainwindowbars.py" line="666" />
       <source>Enable/disable paint mode</source>
-      <translation>Ativar/desativar modo de pintura</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="577"/>
+      <location filename="..\ui\mainwindowbars.py" line="670" />
       <source>Enable/disable text edit mode</source>
-      <translation>Ativar/desativar modo de edição de texto</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="583"/>
+      <location filename="..\ui\mainwindowbars.py" line="676" />
       <source>Original image opacity</source>
-      <translation>Opacidade original da imagem</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="587"/>
+      <location filename="..\ui\mainwindowbars.py" line="680" />
       <source>Text layer opacity</source>
-      <translation>Opacidade da camada de texto</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>Canvas</name>
     <message>
-      <location filename="..\ui\canvas.py" line="743"/>
+      <location filename="..\ui\canvas.py" line="888" />
       <source>Copy</source>
-      <translation>Copiar</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\canvas.py" line="745"/>
+      <location filename="..\ui\canvas.py" line="890" />
       <source>Paste</source>
-      <translation>Colar</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\canvas.py" line="747"/>
+      <location filename="..\ui\canvas.py" line="892" />
       <source>Delete</source>
-      <translation>Excluir</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\canvas.py" line="749"/>
+      <location filename="..\ui\canvas.py" line="894" />
       <source>Copy source text</source>
-      <translation>Copiar texto original</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\canvas.py" line="751"/>
+      <location filename="..\ui\canvas.py" line="896" />
       <source>Paste source text</source>
-      <translation>Colar texto original</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\canvas.py" line="753"/>
+      <location filename="..\ui\canvas.py" line="898" />
       <source>Delete and Recover removed text</source>
-      <translation>Excluir e recuperar texto removido</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\canvas.py" line="758"/>
+      <location filename="..\ui\canvas.py" line="903" />
       <source>Apply font formatting</source>
-      <translation>Aplicar formatação de fonte</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\canvas.py" line="759"/>
+      <location filename="..\ui\canvas.py" line="904" />
       <source>Auto layout</source>
-      <translation>Layout automático</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\canvas.py" line="760"/>
+      <location filename="..\ui\canvas.py" line="905" />
       <source>Reset Angle</source>
-      <translation>Redefinir ângulo</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\canvas.py" line="761"/>
+      <location filename="..\ui\canvas.py" line="906" />
       <source>Squeeze</source>
-      <translation>Comprimir</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\canvas.py" line="763"/>
+      <location filename="..\ui\canvas.py" line="908" />
       <source>translate</source>
-      <translation>Traduzir</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\canvas.py" line="764"/>
+      <location filename="..\ui\canvas.py" line="909" />
       <source>OCR</source>
-      <translation>OCR</translation>
+      <translation type="unfinished">OCR</translation>
     </message>
     <message>
-      <location filename="..\ui\canvas.py" line="765"/>
+      <location filename="..\ui\canvas.py" line="910" />
       <source>OCR and translate</source>
-      <translation>OCR e traduzir</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\canvas.py" line="766"/>
+      <location filename="..\ui\canvas.py" line="911" />
       <source>OCR, translate and inpaint</source>
-      <translation>OCR, traduzir e inpaint</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\canvas.py" line="767"/>
+      <location filename="..\ui\canvas.py" line="912" />
       <source>inpaint</source>
-      <translation>Retocar</translation>
+      <translation type="unfinished" />
+    </message>
+  </context>
+  <context>
+    <name>ColorPickerLabel</name>
+    <message>
+      <location filename="..\ui\custom_widget\label.py" line="64" />
+      <source>Apply Color</source>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>ConfigPanel</name>
     <message>
-      <location filename="..\ui\configpanel.py" line="360"/>
+      <location filename="..\ui\configpanel.py" line="351" />
       <source>DL Module</source>
-      <translation>Módulo DL</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="361"/>
+      <location filename="..\ui\configpanel.py" line="352" />
       <source>General</source>
-      <translation>Geral</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="363"/>
+      <location filename="..\ui\configpanel.py" line="354" />
       <source>Text Detection</source>
-      <translation>Detecção de Texto</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="402"/>
-      <location filename="..\ui\configpanel.py" line="364"/>
+      <location filename="..\ui\configpanel.py" line="394" />
+      <location filename="..\ui\configpanel.py" line="355" />
       <source>OCR</source>
-      <translation>OCR</translation>
+      <translation type="unfinished">OCR</translation>
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="365"/>
+      <location filename="..\ui\configpanel.py" line="356" />
       <source>Inpaint</source>
-      <translation>Inpaint</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="366"/>
+      <location filename="..\ui\configpanel.py" line="357" />
       <source>Translator</source>
-      <translation>Tradutor</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="367"/>
+      <location filename="..\ui\configpanel.py" line="358" />
       <source>Startup</source>
-      <translation>Inicialização</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="368"/>
+      <location filename="..\ui\configpanel.py" line="359" />
       <source>Typesetting</source>
-      <translation>Diagramação</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="369"/>
+      <location filename="..\ui\configpanel.py" line="360" />
       <source>Save</source>
-      <translation>Salvamento automático</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="370"/>
+      <location filename="..\ui\configpanel.py" line="361" />
       <source>SalaDict</source>
-      <translation>SalaDict</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="385"/>
+      <location filename="..\ui\configpanel.py" line="376" />
       <source>Load models on demand</source>
-      <translation>Carregar modelos sob demanda</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="385"/>
+      <location filename="..\ui\configpanel.py" line="376" />
       <source>Load models on demand to save memory.</source>
-      <translation>Carregar modelos sob demanda para economizar memória.</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="388"/>
+      <location filename="..\ui\configpanel.py" line="379" />
       <source>Empty cache after RUN</source>
-      <translation>Limpar cache após EXECUTAR</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="388"/>
+      <location filename="..\ui\configpanel.py" line="379" />
       <source>Empty cache after RUN to save memory.</source>
-      <translation>Limpar cache após EXECUTAR para economizar memória.</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="393"/>
+      <location filename="..\ui\configpanel.py" line="384" />
       <source>Unload All Models</source>
-      <translation>Descarregar todos os modelos</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="398"/>
+      <location filename="..\ui\configpanel.py" line="389" />
       <source>Detector</source>
-      <translation>Detector</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="406"/>
+      <location filename="..\ui\configpanel.py" line="398" />
       <source>Inpainter</source>
-      <translation>Inpainter</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="414"/>
+      <location filename="..\ui\configpanel.py" line="406" />
       <source>Reopen last project on startup</source>
-      <translation>Reabrir o último projeto na inicialização</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="418"/>
+      <location filename="..\ui\configpanel.py" line="410" />
       <source>decide by program</source>
-      <translation>Automático</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="419"/>
+      <location filename="..\ui\configpanel.py" line="411" />
       <source>use global setting</source>
-      <translation>usar configuração global</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="429"/>
+      <location filename="..\ui\configpanel.py" line="421" />
       <source>Font Size</source>
-      <translation>Tamanho da fonte</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="433"/>
+      <location filename="..\ui\configpanel.py" line="425" />
       <source>Stroke Size</source>
-      <translation>Espessura do traçado</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="437"/>
+      <location filename="..\ui\configpanel.py" line="429" />
       <source>Font Color</source>
-      <translation>Cor da fonte</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="440"/>
+      <location filename="..\ui\configpanel.py" line="432" />
       <source>Stroke Color</source>
-      <translation>Cor do traçado</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="444"/>
+      <location filename="..\ui\configpanel.py" line="436" />
       <source>Effect</source>
-      <translation>Efeito</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="447"/>
+      <location filename="..\ui\configpanel.py" line="439" />
       <source>Alignment</source>
-      <translation>Alinhamento</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="451"/>
+      <location filename="..\ui\configpanel.py" line="443" />
       <source>Writing-mode</source>
-      <translation>Modo de escrita</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="454"/>
+      <location filename="..\ui\configpanel.py" line="446" />
       <source>Keep existing</source>
-      <translation>Manter existente</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="454"/>
+      <location filename="..\ui\configpanel.py" line="446" />
       <source>Always use global setting</source>
-      <translation>Sempre usar configuração global</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="454"/>
+      <location filename="..\ui\configpanel.py" line="446" />
       <source>Font Family</source>
-      <translation>Família da fonte</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="460"/>
+      <location filename="..\ui\configpanel.py" line="452" />
       <source>Auto layout</source>
-      <translation>Layout automático</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="461"/>
+      <location filename="..\ui\configpanel.py" line="453" />
       <source>Split translation into multi-lines according to the extracted balloon region.</source>
-      <translation>Dividir a tradução em várias linhas de acordo com a região do balão extraída.</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="462"/>
-      <source>Adjust font size adaptively if it is set to "decide by program."</source>
-      <translation>Ajustar o tamanho da fonte de forma adaptativa se estiver definido como "Automático".</translation>
-    </message>
-    <message>
-      <location filename="..\ui\configpanel.py" line="466"/>
+      <location filename="..\ui\configpanel.py" line="456" />
       <source>To uppercase</source>
-      <translation>Converter para maiúsculas</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="470"/>
+      <location filename="..\ui\configpanel.py" line="459" />
+      <source>Independent text styles for each projects</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\configpanel.py" line="462" />
+      <source>Show only custom fonts</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\configpanel.py" line="466" />
       <source>Result image format</source>
-      <translation>Formato</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="475"/>
+      <location filename="..\ui\configpanel.py" line="472" />
       <source>Quality</source>
-      <translation>Qualidade</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="482"/>
+      <location filename="..\ui\configpanel.py" line="477" />
+      <source>Intermediate image format</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\configpanel.py" line="482" />
       <source>&lt;a href="https://github.com/dmMaze/BallonsTranslator/tree/master/doc/saladict.md"&gt;Installation guide&lt;/a&gt;</source>
-      <translation>&lt;a href="https://github.com/dmMaze/BallonsTranslator/tree/master/doc/saladict.md"&gt;Guia de instalação&lt;/a&gt;</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="486"/>
+      <location filename="..\ui\configpanel.py" line="486" />
       <source>Show mini menu when selecting text.</source>
-      <translation>Mostrar mini menu ao selecionar texto.</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="492"/>
+      <location filename="..\ui\configpanel.py" line="492" />
       <source>Shortcut</source>
-      <translation>Atalho</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\configpanel.py" line="495"/>
+      <location filename="..\ui\configpanel.py" line="495" />
       <source>Search Engines</source>
-      <translation>Motores de Busca</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>DrawingPanel</name>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="349"/>
+      <location filename="..\ui\drawingpanel.py" line="436" />
       <source>Mask Opacity</source>
-      <translation>Opacidade da máscara</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>ExportDocThread</name>
     <message>
-      <location filename="..\ui\io_thread.py" line="100"/>
+      <location filename="..\ui\io_thread.py" line="114" />
       <source>Export as doc...</source>
-      <translation>Exportar como documento...</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\io_thread.py" line="106"/>
+      <location filename="..\ui\io_thread.py" line="120" />
       <source>Overwrite </source>
-      <translation>Sobrescrever </translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>FontFormatPanel</name>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="927"/>
+      <location filename="..\ui\text_panel.py" line="262" />
       <source>Font Family</source>
-      <translation>Família da fonte</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="932"/>
+      <location filename="..\ui\text_panel.py" line="267" />
       <source>Font Size</source>
-      <translation>Tamanho da fonte</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="934"/>
+      <location filename="..\ui\text_panel.py" line="269" />
       <source>Change font size</source>
-      <translation>Alterar tamanho da fonte</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="944"/>
+      <location filename="..\ui\text_panel.py" line="279" />
       <source>Change line spacing</source>
-      <translation>Alterar espaçamento entre linhas</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="950"/>
+      <location filename="..\ui\text_panel.py" line="283" />
       <source>Change font color</source>
-      <translation>Alterar cor da fonte</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="964"/>
-      <source>Stroke</source>
-      <translation>Traçado</translation>
-    </message>
-    <message>
-      <location filename="..\ui\fontformatpanel.py" line="973"/>
-      <source>Change stroke color</source>
-      <translation>Alterar cor do traçado</translation>
-    </message>
-    <message>
-      <location filename="..\ui\fontformatpanel.py" line="980"/>
+      <location filename="..\ui\text_panel.py" line="300" />
       <source>Change stroke width</source>
-      <translation>Alterar largura do traçado</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="996"/>
+      <location filename="..\ui\text_panel.py" line="303" />
+      <source>Stroke</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_panel.py" line="312" />
+      <source>Change stroke color</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_panel.py" line="325" />
       <source>Change letter spacing</source>
-      <translation>Alterar espaçamento entre letras</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="1005"/>
+      <location filename="..\ui\text_panel.py" line="339" />
       <source>Global Font Format</source>
-      <translation>Formato de Fonte Global</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="1010"/>
-      <source>Effect</source>
-      <translation>Efeito</translation>
+      <location filename="..\ui\text_panel.py" line="349" />
+      <source>Advanced Text Format</source>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="1015"/>
+      <location filename="..\ui\text_panel.py" line="369" />
       <source>Unfold</source>
-      <translation>Desdobrar</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="1015"/>
+      <location filename="..\ui\text_panel.py" line="369" />
       <source>Fold</source>
-      <translation>Dobrar</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="1016"/>
+      <location filename="..\ui\text_panel.py" line="370" />
       <source>Source</source>
-      <translation>Original</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="1017"/>
+      <location filename="..\ui\text_panel.py" line="371" />
       <source>Translation</source>
-      <translation>Tradução</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>GlobalReplaceThead</name>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="190"/>
+      <location filename="..\ui\global_search_widget.py" line="189" />
       <source>Replace...</source>
-      <translation>Substituir...</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="196"/>
+      <location filename="..\ui\global_search_widget.py" line="195" />
       <source>Replace all occurrences?</source>
-      <translation>Substituir todas as ocorrências?</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>GlobalSearchWidget</name>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="306"/>
+      <location filename="..\ui\global_search_widget.py" line="305" />
       <source>Find</source>
-      <translation>Localizar</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="309"/>
+      <location filename="..\ui\global_search_widget.py" line="308" />
       <source>No results found. </source>
-      <translation>Nenhum resultado encontrado. </translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="310"/>
+      <location filename="..\ui\global_search_widget.py" line="309" />
       <source>Document changed. Press Enter to re-search.</source>
-      <translation>Documento alterado. Pressione Enter para pesquisar novamente.</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="311"/>
+      <location filename="..\ui\global_search_widget.py" line="310" />
       <source>Found results: </source>
-      <translation>Resultados encontrados: </translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="317"/>
+      <location filename="..\ui\global_search_widget.py" line="316" />
       <source>Match Case</source>
-      <translation>Diferenciar maiúsculas de minúsculas</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="322"/>
+      <location filename="..\ui\global_search_widget.py" line="321" />
       <source>Match Whole Word</source>
-      <translation>Coincidir com palavra inteira</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="327"/>
+      <location filename="..\ui\global_search_widget.py" line="326" />
       <source>Use Regular Expression</source>
-      <translation>Usar expressão regular</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="331"/>
+      <location filename="..\ui\global_search_widget.py" line="330" />
       <source>Translation</source>
-      <translation>Tradução</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="331"/>
+      <location filename="..\ui\global_search_widget.py" line="330" />
       <source>Source</source>
-      <translation>Original</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="331"/>
+      <location filename="..\ui\global_search_widget.py" line="330" />
       <source>All</source>
-      <translation>Todos</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="334"/>
+      <location filename="..\ui\global_search_widget.py" line="333" />
       <source> in</source>
-      <translation> em</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="337"/>
+      <location filename="..\ui\global_search_widget.py" line="336" />
       <source>Replace</source>
-      <translation>Substituir</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="340"/>
+      <location filename="..\ui\global_search_widget.py" line="339" />
       <source>Replace All</source>
-      <translation>Substituir tudo</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="342"/>
+      <location filename="..\ui\global_search_widget.py" line="341" />
       <source>Replace All and Re-render all pages</source>
-      <translation>Substituir tudo e renderizar novamente todas as páginas</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="383"/>
+      <location filename="..\ui\global_search_widget.py" line="382" />
       <source>Replace...</source>
-      <translation>Substituir...</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\global_search_widget.py" line="488"/>
+      <location filename="..\ui\global_search_widget.py" line="487" />
       <source>Replace all occurrences re-render all pages? It can't be undone.</source>
-      <translation>Substituir todas as ocorrências e renderizar novamente todas as páginas? Isso não pode ser desfeito.</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>ImgtransProgressMessageBox</name>
     <message>
-      <location filename="..\ui\stylewidgets.py" line="159"/>
+      <location filename="..\ui\custom_widget\message.py" line="160" />
       <source>Detecting: </source>
-      <translation>Detectando: </translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\stylewidgets.py" line="160"/>
+      <location filename="..\ui\custom_widget\message.py" line="161" />
       <source>OCR: </source>
-      <translation>OCR: </translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\stylewidgets.py" line="161"/>
+      <location filename="..\ui\custom_widget\message.py" line="162" />
       <source>Inpainting: </source>
-      <translation>Inpainting: </translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\stylewidgets.py" line="162"/>
+      <location filename="..\ui\custom_widget\message.py" line="163" />
       <source>Translating: </source>
-      <translation>Traduzindo: </translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>ImgtransThread</name>
     <message>
-      <location filename="..\ui\module_manager.py" line="384"/>
-      <location filename="..\ui\module_manager.py" line="318"/>
+      <location filename="..\ui\module_manager.py" line="404" />
+      <location filename="..\ui\module_manager.py" line="320" />
       <source>OCR Failed.</source>
-      <translation>Falha no OCR.</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\module_manager.py" line="371"/>
+      <location filename="..\ui\module_manager.py" line="377" />
       <source>Text Detection Failed.</source>
-      <translation>Falha na detecção de texto.</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\module_manager.py" line="445"/>
+      <location filename="..\ui\module_manager.py" line="465" />
       <source>Inpainting Failed.</source>
-      <translation>Falha no Inpainting.</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>ImportDocThread</name>
     <message>
-      <location filename="..\ui\io_thread.py" line="136"/>
+      <location filename="..\ui\io_thread.py" line="150" />
       <source>Import doc...</source>
-      <translation>Importar documento...</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\io_thread.py" line="143"/>
+      <location filename="..\ui\io_thread.py" line="157" />
       <source>Import *.docx</source>
-      <translation>Importar *.docx</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>InpaintConfigPanel</name>
     <message>
-      <location filename="..\ui\module_parse_widgets.py" line="368"/>
+      <location filename="..\ui\module_parse_widgets.py" line="436" />
       <source>Let the program decide whether it is necessary to use the selected inpaint method.</source>
-      <translation>Permitir que o programa decida se é necessário usar o método de Inpainting selecionado.</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>InpaintPanel</name>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="73"/>
+      <location filename="..\ui\drawingpanel.py" line="82" />
       <source>Thickness</source>
-      <translation>Espessura</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="78"/>
+      <location filename="..\ui\drawingpanel.py" line="102" />
+      <source>Alpha</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\drawingpanel.py" line="107" />
       <source>Shape</source>
-      <translation>Forma</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="81"/>
+      <location filename="..\ui\drawingpanel.py" line="110" />
       <source>Circle</source>
-      <translation>Círculo</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="82"/>
+      <location filename="..\ui\drawingpanel.py" line="111" />
       <source>Rectangle</source>
-      <translation>Retângulo</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="91"/>
+      <location filename="..\ui\drawingpanel.py" line="120" />
       <source>Inpainter</source>
-      <translation>Inpainter</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>InpaintThread</name>
     <message>
-      <location filename="..\ui\module_manager.py" line="121"/>
+      <location filename="..\ui\module_manager.py" line="123" />
       <source>Inpainting Failed.</source>
-      <translation>Falha no Inpainting.</translation>
-    </message>
-  </context>
-  <context>
-    <name>InpainterStatusButton</name>
-    <message>
-      <location filename="..\ui\mainwindowbars.py" line="83"/>
-      <source>Inpainter: </source>
-      <translation>Inpainter: </translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>KeywordSubWidget</name>
     <message>
-      <location filename="..\ui\keywordsubwidget.py" line="25"/>
+      <location filename="..\ui\keywordsubwidget.py" line="25" />
       <source>Keyword</source>
-      <translation>Palavra-chave</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\keywordsubwidget.py" line="26"/>
+      <location filename="..\ui\keywordsubwidget.py" line="26" />
       <source>Substitution</source>
-      <translation>Substituição</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\keywordsubwidget.py" line="27"/>
+      <location filename="..\ui\keywordsubwidget.py" line="27" />
       <source>Use regex</source>
-      <translation>Usar regex</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\keywordsubwidget.py" line="28"/>
+      <location filename="..\ui\keywordsubwidget.py" line="28" />
       <source>Case sensitive</source>
-      <translation>Diferenciar maiúsculas de minúsculas</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\keywordsubwidget.py" line="35"/>
+      <location filename="..\ui\keywordsubwidget.py" line="35" />
       <source>New</source>
-      <translation>Novo</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\keywordsubwidget.py" line="37"/>
+      <location filename="..\ui\keywordsubwidget.py" line="37" />
       <source>Delete</source>
-      <translation>Excluir</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>LeftBar</name>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="131"/>
+      <location filename="..\ui\mainwindowbars.py" line="77" />
       <source>Global Search (Ctrl+G)</source>
-      <translation>Pesquisa Global (Ctrl+G)</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="142"/>
+      <location filename="..\ui\mainwindowbars.py" line="88" />
       <source>Open Folder ...</source>
-      <translation>Abrir Pasta ...</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="146"/>
+      <location filename="..\ui\mainwindowbars.py" line="92" />
       <source>Open Project ... *.json</source>
-      <translation>Abrir Projeto ... *.json</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="149"/>
+      <location filename="..\ui\mainwindowbars.py" line="95" />
       <source>Save Project</source>
-      <translation>Salvar Projeto</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="153"/>
+      <location filename="..\ui\mainwindowbars.py" line="99" />
+      <source>Save All Pages</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindowbars.py" line="102" />
       <source>Export as Doc</source>
-      <translation>Exportar como Documento</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="155"/>
+      <location filename="..\ui\mainwindowbars.py" line="104" />
       <source>Import from Doc</source>
-      <translation>Importar de Documento</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="158"/>
+      <location filename="..\ui\mainwindowbars.py" line="107" />
+      <source>Export source text as TXT</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindowbars.py" line="109" />
+      <source>Export translation as TXT</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindowbars.py" line="112" />
+      <source>Export source text as markdown</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindowbars.py" line="114" />
+      <source>Export translation as markdown</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindowbars.py" line="117" />
+      <source>Import translation from TXT/markdown</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindowbars.py" line="120" />
+      <source>Import translation script</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindowbars.py" line="123" />
+      <source>Export translation script</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindowbars.py" line="126" />
       <source>Open Recent</source>
-      <translation>Abrir Recentes</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="273"/>
+      <location filename="..\ui\mainwindowbars.py" line="156" />
+      <source>Run</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindowbars.py" line="253" />
       <source>Select Directory</source>
-      <translation>Selecionar Diretório</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="280"/>
+      <location filename="..\ui\mainwindowbars.py" line="260" />
       <source>Import *.docx</source>
-      <translation>Importar *.docx</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>MainWindow</name>
     <message>
-      <location filename="..\ui\mainwindow.py" line="194"/>
-      <source>Keyword substitution for OCR</source>
-      <translation>Substituição de palavras-chave para OCR</translation>
+      <location filename="..\ui\mainwindow.py" line="212" />
+      <source>Keyword substitution for source text</source>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindow.py" line="198"/>
+      <location filename="..\ui\mainwindow.py" line="216" />
+      <source>Keyword substitution for machine translation source text</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="220" />
       <source>Keyword substitution for machine translation</source>
-      <translation>Substituição de palavras-chave para tradução automática</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindow.py" line="358"/>
+      <location filename="..\ui\mainwindow.py" line="491" />
       <source>Failed to load project </source>
-      <translation>Falha ao carregar o projeto </translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindow.py" line="377"/>
+      <location filename="..\ui\mainwindow.py" line="510" />
       <source>Failed to load project from</source>
-      <translation>Falha ao carregar projeto de</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindow.py" line="427"/>
-      <source>Restart to apply changes? 
+      <location filename="..\ui\mainwindow.py" line="566" />
+      <source>Restart to apply changes? 
 </source>
-    <translation>Deseja reiniciar para aplicar as alterações?
-</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindow.py" line="960"/>
+      <location filename="..\ui\mainwindow.py" line="893" />
+      <source>No project loaded.</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="900" />
+      <source>Failed to save project</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="913" />
+      <source>Saving: </source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="914" />
+      <source>Save All Pages</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="953" />
+      <source>Failed pages:</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1283" />
       <source>unsaved</source>
-      <translation>não salvo</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindow.py" line="960"/>
+      <location filename="..\ui\mainwindow.py" line="1283" />
       <source>saved</source>
-      <translation>salvo</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindow.py" line="997"/>
+      <location filename="..\ui\mainwindow.py" line="1317" />
       <source>Saving image...</source>
-      <translation>Salvando imagem...</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindow.py" line="1058"/>
+      <location filename="..\ui\mainwindow.py" line="1330" />
+      <source>Confirmation</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1331" />
+      <source>Are you sure to run image translation again?
+All existing translation results will be cleared!</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1378" />
       <source>Import Text Styles</source>
-      <translation>Importar Estilos de Texto</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindow.py" line="1072"/>
+      <location filename="..\ui\mainwindow.py" line="1392" />
       <source>Save Text Styles</source>
-      <translation>Salvar Estilos de Texto</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindow.py" line="1134"/>
+      <location filename="..\ui\mainwindow.py" line="1435" />
+      <source>Text file exported to </source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1437" />
+      <source>Failed to export as TEXT file</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1443" />
+      <source>Import *.md/*.txt</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1455" />
+      <source>Translation imported and matched successfully.</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1457" />
+      <source>Imported txt file not fully matched with current project, please make sure source txt file structured like results from "export TXT/markdown"</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1459" />
+      <source>Missing pages: </source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1462" />
+      <source>Unexpected pages: </source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1465" />
+      <source>Unmatched pages: </source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1476" />
+      <source>Failed to import translation from </source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1487" />
+      <source>Import Translation Script</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1511" />
+      <source>Translation script imported successfully.</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1513" />
+      <source>Translation script imported with some issues:</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1515" />
+      <source>Pages not found in project: </source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1526" />
+      <source>Failed to import translation script</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1533" />
+      <source>Translation script exported to </source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1533" />
+      <source>translations.txt</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1538" />
+      <source>Failed to export translation script</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindow.py" line="1562" />
       <source>Export to </source>
-      <translation>Exportar para </translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>ModuleManager</name>
     <message>
-      <location filename="..\ui\module_manager.py" line="856"/>
+      <location filename="..\ui\module_manager.py" line="888" />
       <source>Set Inpainter...</source>
-      <translation>Definir Inpainter...</translation>
-    </message>
-    <message>
-      <location filename="..\ui\module_manager.py" line="906"/>
-      <source>Invalid</source>
-      <translation>Inválido</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>OCRConfigPanel</name>
     <message>
-      <location filename="..\ui\module_parse_widgets.py" line="395"/>
-      <source>Keyword substitution for OCR results</source>
-      <translation>Substituição de palavras-chave para resultados de OCR</translation>
-    </message>
-    <message>
-      <location filename="..\ui\module_parse_widgets.py" line="399"/>
+      <location filename="..\ui\module_parse_widgets.py" line="461" />
       <source>Delete and restore region where OCR return empty string.</source>
-      <translation>Excluir e restaurar a região onde o OCR retorna uma string vazia.</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>PageListView</name>
     <message>
-      <location filename="..\ui\mainwindow.py" line="49"/>
+      <location filename="..\ui\mainwindow.py" line="52" />
       <source>Reveal in File Explorer</source>
-      <translation>Mostrar no Explorador de Arquivos</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>PageSearchWidget</name>
     <message>
-      <location filename="..\ui\page_search_widget.py" line="207"/>
+      <location filename="..\ui\page_search_widget.py" line="207" />
       <source>Find</source>
-      <translation>Localizar</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\page_search_widget.py" line="210"/>
+      <location filename="..\ui\page_search_widget.py" line="210" />
       <source>No result</source>
-      <translation>Nenhum resultado</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\page_search_widget.py" line="216"/>
+      <location filename="..\ui\page_search_widget.py" line="216" />
       <source>Previous Match (Shift+Enter)</source>
-      <translation>Correspondência anterior (Shift+Enter)</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\page_search_widget.py" line="221"/>
+      <location filename="..\ui\page_search_widget.py" line="221" />
       <source>Next Match (Enter)</source>
-      <translation>Próxima correspondência (Enter)</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\page_search_widget.py" line="225"/>
+      <location filename="..\ui\page_search_widget.py" line="225" />
       <source>Match Case</source>
-      <translation>Diferenciar maiúsculas de minúsculas</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\page_search_widget.py" line="230"/>
+      <location filename="..\ui\page_search_widget.py" line="230" />
       <source>Match Whole Word</source>
-      <translation>Coincidir com palavra inteira</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\page_search_widget.py" line="235"/>
+      <location filename="..\ui\page_search_widget.py" line="235" />
       <source>Use Regular Expression</source>
-      <translation>Usar expressão regular</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\page_search_widget.py" line="239"/>
+      <location filename="..\ui\page_search_widget.py" line="239" />
       <source>Translation</source>
-      <translation>Tradução</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\page_search_widget.py" line="239"/>
+      <location filename="..\ui\page_search_widget.py" line="239" />
       <source>Source</source>
-      <translation>Original</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\page_search_widget.py" line="239"/>
+      <location filename="..\ui\page_search_widget.py" line="239" />
       <source>All</source>
-      <translation>Todos</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\page_search_widget.py" line="242"/>
+      <location filename="..\ui\page_search_widget.py" line="242" />
       <source>Range</source>
-      <translation>Intervalo</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\page_search_widget.py" line="249"/>
-      <location filename="..\ui\page_search_widget.py" line="245"/>
+      <location filename="..\ui\page_search_widget.py" line="249" />
+      <location filename="..\ui\page_search_widget.py" line="245" />
       <source>Replace</source>
-      <translation>Substituir</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\page_search_widget.py" line="253"/>
+      <location filename="..\ui\page_search_widget.py" line="253" />
       <source>Replace All</source>
-      <translation>Substituir tudo</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\page_search_widget.py" line="290"/>
+      <location filename="..\ui\page_search_widget.py" line="290" />
       <source>Close (Escape)</source>
-      <translation>Fechar (Esc)</translation>
+      <translation type="unfinished" />
+    </message>
+  </context>
+  <context>
+    <name>ParamComboBox</name>
+    <message>
+      <location filename="..\ui\custom_widget\combobox.py" line="75" />
+      <source>Flush</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\custom_widget\combobox.py" line="78" />
+      <source>Select Path</source>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>PenConfigPanel</name>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="135"/>
+      <location filename="..\ui\drawingpanel.py" line="197" />
       <source>Color</source>
-      <translation>Cor</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="136"/>
-      <source>Alpha</source>
-      <translation>Alfa</translation>
-    </message>
-    <message>
-      <location filename="..\ui\drawingpanel.py" line="144"/>
+      <location filename="..\ui\drawingpanel.py" line="203" />
       <source>Thickness</source>
-      <translation>Espessura</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="149"/>
+      <location filename="..\ui\drawingpanel.py" line="209" />
+      <source>Alpha</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\drawingpanel.py" line="214" />
       <source>Shape</source>
-      <translation>Forma</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="152"/>
+      <location filename="..\ui\drawingpanel.py" line="217" />
       <source>Circle</source>
-      <translation>Círculo</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="153"/>
+      <location filename="..\ui\drawingpanel.py" line="218" />
       <source>Rectangle</source>
-      <translation>Retângulo</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>RectPanel</name>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="197"/>
+      <location filename="..\ui\drawingpanel.py" line="280" />
       <source>Dilate</source>
-      <translation>Dilatar</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="204"/>
+      <location filename="..\ui\drawingpanel.py" line="288" />
       <source>method 1</source>
-      <translation>método 1</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="204"/>
+      <location filename="..\ui\drawingpanel.py" line="289" />
       <source>method 2</source>
-      <translation>método 2</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="205"/>
+      <location filename="..\ui\drawingpanel.py" line="290" />
+      <source>Use Existing Mask</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\drawingpanel.py" line="293" />
       <source>Auto</source>
-      <translation>Automático</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="206"/>
+      <location filename="..\ui\drawingpanel.py" line="294" />
       <source>run inpainting automatically.</source>
-      <translation>executar Inpainting automaticamente.</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="208"/>
+      <location filename="..\ui\drawingpanel.py" line="296" />
       <source>Inpaint</source>
-      <translation>Retocar</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="209"/>
+      <location filename="..\ui\drawingpanel.py" line="297" />
       <source>Space</source>
-      <translation>Espaço</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="211"/>
+      <location filename="..\ui\drawingpanel.py" line="299" />
       <source>Delete</source>
-      <translation>Excluir</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="212"/>
+      <location filename="..\ui\drawingpanel.py" line="300" />
       <source>Ctrl+D</source>
-      <translation>Ctrl+D</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\drawingpanel.py" line="219"/>
+      <location filename="..\ui\drawingpanel.py" line="307" />
       <source>Inpainter</source>
-      <translation>Inpainter</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>SelectTextMiniMenu</name>
     <message>
-      <location filename="..\ui\textedit_area.py" line="30"/>
+      <location filename="..\ui\textedit_area.py" line="30" />
       <source>Search selected text on Internet</source>
-      <translation>Pesquisar texto selecionado na Internet</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\textedit_area.py" line="36"/>
+      <location filename="..\ui\textedit_area.py" line="36" />
       <source>Look up selected text in SalaDict, see installation guide in configpanel</source>
-      <translation>Consultar texto selecionado no SalaDict, veja o guia de instalação no painel de configuração</translation>
+      <translation type="unfinished" />
+    </message>
+  </context>
+  <context>
+    <name>TextAdvancedFormatPanel</name>
+    <message>
+      <location filename="..\ui\text_advanced_format.py" line="150" />
+      <source>Proportional</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_advanced_format.py" line="151" />
+      <source>Distance</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_advanced_format.py" line="155" />
+      <source>Line Spacing Type</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_advanced_format.py" line="161" />
+      <source>Set Text Opacity</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_advanced_format.py" line="163" />
+      <source>Opacity</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_advanced_format.py" line="174" />
+      <source>Shadow</source>
+      <translation type="unfinished" />
+    </message>
+  </context>
+  <context>
+    <name>TextDetectConfigPanel</name>
+    <message>
+      <location filename="..\ui\module_parse_widgets.py" line="452" />
+      <source>Keep Existing Lines</source>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>TextEffectPanel</name>
     <message>
-      <location filename="..\ui\text_graphical_effect.py" line="90"/>
-      <source>Effect</source>
-      <translation>Efeito</translation>
-    </message>
-    <message>
-      <location filename="..\ui\text_graphical_effect.py" line="100"/>
-      <location filename="..\ui\text_graphical_effect.py" line="99"/>
-      <source>Opacity</source>
-      <translation>Opacidade</translation>
-    </message>
-    <message>
-      <location filename="..\ui\text_graphical_effect.py" line="105"/>
-      <source>Shadow</source>
-      <translation>Sombra</translation>
-    </message>
-    <message>
-      <location filename="..\ui\text_graphical_effect.py" line="108"/>
-      <source>Change shadow color</source>
-      <translation>Alterar cor da sombra</translation>
-    </message>
-    <message>
-      <location filename="..\ui\text_graphical_effect.py" line="109"/>
-      <source>radius</source>
-      <translation>raio</translation>
-    </message>
-    <message>
-      <location filename="..\ui\text_graphical_effect.py" line="112"/>
-      <source>strength</source>
-      <translation>intensidade</translation>
-    </message>
-    <message>
-      <location filename="..\ui\text_graphical_effect.py" line="115"/>
-      <source>x offset</source>
-      <translation>deslocamento x</translation>
-    </message>
-    <message>
-      <location filename="..\ui\text_graphical_effect.py" line="118"/>
-      <source>y offset</source>
-      <translation>deslocamento y</translation>
-    </message>
-    <message>
-      <location filename="..\ui\text_graphical_effect.py" line="122"/>
-      <source>Apply</source>
-      <translation>Aplicar</translation>
-    </message>
-    <message>
-      <location filename="..\ui\text_graphical_effect.py" line="124"/>
-      <source>Cancel</source>
-      <translation>Cancelar</translation>
+      <location filename="..\ui\text_effect.py" line="12" />
+      <source>Gradient</source>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
-    <name>TextStyleArea</name>
+    <name>TextGradientGroup</name>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="634"/>
-      <source>Style</source>
-      <translation>Estilo</translation>
+      <location filename="..\ui\text_advanced_format.py" line="84" />
+      <source>Gradient</source>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="803"/>
-      <location filename="..\ui\fontformatpanel.py" line="638"/>
-      <source>New Text Style</source>
-      <translation>Novo Estilo de Texto</translation>
+      <location filename="..\ui\text_advanced_format.py" line="88" />
+      <source>Start Color</source>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="643"/>
-      <source>Remove All</source>
-      <translation>Remover Todos</translation>
+      <location filename="..\ui\text_advanced_format.py" line="94" />
+      <source>End Color</source>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="663"/>
-      <source>Remove all styles?</source>
-      <translation>Remover todos os estilos?</translation>
+      <location filename="..\ui\text_advanced_format.py" line="99" />
+      <source>Enable</source>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="804"/>
-      <source>Remove all</source>
-      <translation>Remover todos</translation>
+      <location filename="..\ui\text_advanced_format.py" line="103" />
+      <source>Set Gradient Angle</source>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="806"/>
-      <source>Import Text Styles</source>
-      <translation>Importar Estilos de Texto</translation>
+      <location filename="..\ui\text_advanced_format.py" line="105" />
+      <source>Angle</source>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="807"/>
-      <source>Export Text Styles</source>
-      <translation>Exportar Estilos de Texto</translation>
+      <location filename="..\ui\text_advanced_format.py" line="113" />
+      <source>Set Gradient Size</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_advanced_format.py" line="115" />
+      <source>Size</source>
+      <translation type="unfinished" />
+    </message>
+  </context>
+  <context>
+    <name>TextShadowGroup</name>
+    <message>
+      <location filename="..\ui\text_advanced_format.py" line="16" />
+      <source>Set X offset</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_advanced_format.py" line="26" />
+      <source>Set Y offset</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_advanced_format.py" line="38" />
+      <source>Set Shadow Strength</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_advanced_format.py" line="40" />
+      <source>Strength</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_advanced_format.py" line="48" />
+      <source>Set Shadow Radius</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_advanced_format.py" line="50" />
+      <source>Radius</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_advanced_format.py" line="66" />
+      <source>Offset</source>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>TextStyleLabel</name>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="434"/>
+      <location filename="..\ui\text_style_presets.py" line="86" />
       <source>Click to set as Global format. Double click to edit name.</source>
-      <translation>Clique para definir como formato global. Clique duas vezes para editar o nome.</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="446"/>
+      <location filename="..\ui\text_style_presets.py" line="98" />
       <source>Apply Text Style</source>
-      <translation>Aplicar Estilo de Texto</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="451"/>
+      <location filename="..\ui\text_style_presets.py" line="103" />
       <source>Update from active style</source>
-      <translation>Atualizar do estilo ativo</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\fontformatpanel.py" line="468"/>
+      <location filename="..\ui\text_style_presets.py" line="120" />
       <source>Delete Style</source>
-      <translation>Excluir Estilo</translation>
+      <translation type="unfinished" />
+    </message>
+  </context>
+  <context>
+    <name>TextStylePresetPanel</name>
+    <message>
+      <location filename="..\ui\text_style_presets.py" line="276" />
+      <source>Style</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_style_presets.py" line="439" />
+      <location filename="..\ui\text_style_presets.py" line="280" />
+      <source>New Text Style</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_style_presets.py" line="285" />
+      <source>Remove All</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_style_presets.py" line="299" />
+      <source>Remove all styles?</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_style_presets.py" line="440" />
+      <source>Remove all</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_style_presets.py" line="442" />
+      <source>Import Text Styles</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\text_style_presets.py" line="443" />
+      <source>Export Text Styles</source>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>TitleBar</name>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="318"/>
+      <location filename="..\ui\mainwindowbars.py" line="299" />
       <source>Edit</source>
-      <translation>Editar</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="320"/>
+      <location filename="..\ui\mainwindowbars.py" line="301" />
       <source>Undo</source>
-      <translation>Desfazer</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="323"/>
+      <location filename="..\ui\mainwindowbars.py" line="304" />
       <source>Redo</source>
-      <translation>Refazer</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="326"/>
+      <location filename="..\ui\mainwindowbars.py" line="307" />
       <source>Search</source>
-      <translation>Pesquisar</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="329"/>
+      <location filename="..\ui\mainwindowbars.py" line="310" />
       <source>Global Search</source>
-      <translation>Pesquisa Global</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="333"/>
+      <location filename="..\ui\mainwindowbars.py" line="314" />
+      <source>Keyword substitution for machine translation source text</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\mainwindowbars.py" line="316" />
       <source>Keyword substitution for machine translation</source>
-      <translation>Substituição de palavras-chave para tradução automática</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="335"/>
-      <source>Keyword substitution for OCR results</source>
-      <translation>Substituição de palavras-chave para resultados de OCR</translation>
+      <location filename="..\ui\mainwindowbars.py" line="318" />
+      <source>Keyword substitution for source text</source>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="346"/>
+      <location filename="..\ui\mainwindowbars.py" line="329" />
       <source>View</source>
-      <translation>Exibir</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="348"/>
+      <location filename="..\ui\mainwindowbars.py" line="331" />
       <source>Display Language</source>
-      <translation>Idioma de Exibição</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="362"/>
+      <location filename="..\ui\mainwindowbars.py" line="345" />
       <source>Drawing Board</source>
-      <translation>Prancheta de Desenho</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="364"/>
+      <location filename="..\ui\mainwindowbars.py" line="347" />
       <source>Text Editor</source>
-      <translation>Editor de Texto</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="366"/>
-      <source>Text Styles Panel</source>
-      <translation>Painel de Estilos de Texto</translation>
-    </message>
-    <message>
-      <location filename="..\ui\mainwindowbars.py" line="367"/>
+      <location filename="..\ui\mainwindowbars.py" line="349" />
       <source>Import Text Styles</source>
-      <translation>Importar Estilos de Texto</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="368"/>
+      <location filename="..\ui\mainwindowbars.py" line="350" />
       <source>Export Text Styles</source>
-      <translation>Exportar Estilos de Texto</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="369"/>
+      <location filename="..\ui\mainwindowbars.py" line="351" />
       <source>Dark Mode</source>
-      <translation>Modo Escuro</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="391"/>
+      <location filename="..\ui\mainwindowbars.py" line="371" />
       <source>Go</source>
-      <translation>Ir</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="392"/>
+      <location filename="..\ui\mainwindowbars.py" line="372" />
       <source>Previous Page</source>
-      <translation>Página Anterior</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="394"/>
+      <location filename="..\ui\mainwindowbars.py" line="374" />
       <source>Next Page</source>
-      <translation>Próxima Página</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="417"/>
-      <location filename="..\ui\mainwindowbars.py" line="404"/>
+      <location filename="..\ui\mainwindowbars.py" line="397" />
+      <location filename="..\ui\mainwindowbars.py" line="384" />
       <source>Run</source>
-      <translation>Executar</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="407"/>
+      <location filename="..\ui\mainwindowbars.py" line="387" />
       <source>Enable Text Dection</source>
-      <translation>Ativar Detecção de Texto</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="408"/>
+      <location filename="..\ui\mainwindowbars.py" line="388" />
       <source>Enable OCR</source>
-      <translation>Ativar OCR</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="409"/>
+      <location filename="..\ui\mainwindowbars.py" line="389" />
       <source>Enable Translation</source>
-      <translation>Ativar Tradução</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="410"/>
+      <location filename="..\ui\mainwindowbars.py" line="390" />
       <source>Enable Inpainting</source>
-      <translation>Ativar Inpaint</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="418"/>
+      <location filename="..\ui\mainwindowbars.py" line="398" />
       <source>Run without update textstyle</source>
-      <translation>Executar sem atualizar estilo de texto</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="419"/>
+      <location filename="..\ui\mainwindowbars.py" line="399" />
       <source>Translate page</source>
-      <translation>Traduzir página</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>TranslateThread</name>
     <message>
-      <location filename="..\ui\module_manager.py" line="188"/>
+      <location filename="..\ui\module_manager.py" line="190" />
       <source>Failed to set translator </source>
-      <translation>Falha ao definir o tradutor </translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\module_manager.py" line="238"/>
-      <location filename="..\ui\module_manager.py" line="206"/>
+      <location filename="..\ui\module_manager.py" line="240" />
+      <location filename="..\ui\module_manager.py" line="208" />
       <source>Translation Failed.</source>
-      <translation>Falha na tradução.</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
     <name>TranslatorConfigPanel</name>
     <message>
-      <location filename="..\ui\module_parse_widgets.py" line="329"/>
+      <location filename="..\ui\module_parse_widgets.py" line="389" />
+      <source>Keyword substitution for machine translation source text</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\module_parse_widgets.py" line="392" />
       <source>Keyword substitution for machine translation</source>
-      <translation>Substituição de palavras-chave para tradução automática</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\module_parse_widgets.py" line="336"/>
+      <location filename="..\ui\module_parse_widgets.py" line="395" />
+      <source>Keyword substitution for source text</source>
+      <translation type="unfinished" />
+    </message>
+    <message>
+      <location filename="..\ui\module_parse_widgets.py" line="402" />
       <source>Source</source>
-      <translation>Original</translation>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\module_parse_widgets.py" line="338"/>
+      <location filename="..\ui\module_parse_widgets.py" line="404" />
       <source>Target</source>
-      <translation>Alvo</translation>
+      <translation type="unfinished" />
     </message>
   </context>
   <context>
-    <name>TranslatorStatusButton</name>
+    <name>TranslatorSelectionWidget</name>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="76"/>
-      <source>Translator: </source>
-      <translation>Tradutor: </translation>
+      <location filename="..\ui\mainwindowbars.py" line="593" />
+      <source>Translate</source>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="77"/>
-      <source>Source: </source>
-      <translation>Original: </translation>
+      <location filename="..\ui\mainwindowbars.py" line="595" />
+      <source>Source</source>
+      <translation type="unfinished" />
     </message>
     <message>
-      <location filename="..\ui\mainwindowbars.py" line="78"/>
-      <source>Target: </source>
-      <translation>Alvo: </translation>
+      <location filename="..\ui\mainwindowbars.py" line="597" />
+      <source>Target</source>
+      <translation type="unfinished" />
     </message>
   </context>
 </TS>

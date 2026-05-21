@@ -84,13 +84,7 @@ DISPLAY_LANGUAGE_MAP = {
     "Hungarian": "hu_HU",
     "Français": "fr_FR"
 }
-VALID_LANG_SET = set(list(DISPLAY_LANGUAGE_MAP.values()))
-
-for p in os.listdir(TRANSLATE_DIR):
-    if p.endswith('.qm'):
-        lang = p.replace('.qm', '')
-        if lang not in VALID_LANG_SET:
-            DISPLAY_LANGUAGE_MAP[lang] = lang
+VALID_LANG_SET = set(DISPLAY_LANGUAGE_MAP.values())
 
 DEFAULT_DISPLAY_LANG = 'English'
 

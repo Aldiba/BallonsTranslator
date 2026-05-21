@@ -702,6 +702,30 @@ class ProjImgTrans:
         with open(save_path, 'w', encoding='utf8') as f:
             f.write('\n\n\n'.join(text_all))
 
+    def dump_custom_script(self):
+        save_path = osp.join(self.directory, 'translations.txt')
+        lines = []
+        for page_name, blk_list in self.pages.items():
+            img_path = osp.join(self.directory, page_name)
+            try:
+                from PIL import Image
+                img = Image.open(img_path)
+                im_w, im_h = img.width, img.height
+            except:
+                im_w, im_h = 1920, 1080
+
+            lines.append(f'>>>>>>>>[{page_name}]<<<<<<<<')
+            for ii, blk in enumerate(blk_list):
+                xyxy = blk.xyxy
+                x = (xyxy[0] + xyxy[2]) / 2 / im_w
+                y = (xyxy[1] + xyxy[3]) / 2 / im_h
+                w = (xyxy[2] - xyxy[0])
+                text = blk.translation.strip()
+                lines.append(f'----------------[{ii + 1}]----------------[{x},{y},{w}]')
+                lines.append(text)
+        with open(save_path, 'w', encoding='utf8') as f:
+            f.write('\n'.join(lines))
+
     def load_doc(self, doc_path, delete_tmp_folder=True, fin_page_signal=None):
         tmp_bubble_folder = osp.join(self.directory, 'img_folder')
         os.makedirs(tmp_bubble_folder, exist_ok=True)

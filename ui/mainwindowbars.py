@@ -120,6 +120,9 @@ class LeftBar(Widget):
         actionImportTranslationScript = QAction(self.tr("Import translation script"), self)
         self.import_translation_script = actionImportTranslationScript.triggered
 
+        actionExportTranslationScript = QAction(self.tr("Export translation script"), self)
+        self.export_translation_script = actionExportTranslationScript.triggered
+
         self.recentMenu = QMenu(self.tr("Open Recent"), self)
         
         openMenu = QMenu(self)
@@ -137,6 +140,7 @@ class LeftBar(Widget):
             actionExportTranslationMD,
             actionImportTranslationTxt,
             actionImportTranslationScript,
+            actionExportTranslationScript,
         ])
         self.openBtn = OpenBtn()
         self.openBtn.setFixedSize(LEFTBTN_WIDTH, LEFTBTN_WIDTH)

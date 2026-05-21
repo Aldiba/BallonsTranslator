@@ -152,6 +152,7 @@ class MainWindow(mainwindow_cls):
         self.leftBar.export_trans_md.connect(lambda : self.on_export_txt(dump_target='translation', suffix='.md'))
         self.leftBar.import_trans_txt.connect(self.on_import_trans_txt)
         self.leftBar.import_translation_script.connect(self.on_import_translation_script)
+        self.leftBar.export_translation_script.connect(self.on_export_translation_script)
 
         self.pageList = PageListView()
         self.pageList.reveal_file.connect(self.on_reveal_file)
@@ -447,6 +448,8 @@ class MainWindow(mainwindow_cls):
         self.centralStackWidget.setCurrentIndex(1)
 
     def set_display_lang(self, lang: str):
+        from utils.i18n import switch_language
+        switch_language(lang)
         self.retranslateUI()
 
     def OpenProj(self, proj_path: str):
@@ -1523,6 +1526,18 @@ class MainWindow(mainwindow_cls):
             import traceback
             LOGGER.error(traceback.format_exc())
             create_error_dialog(e, self.tr('Failed to import translation script'))
+
+    def on_export_translation_script(self):
+        try:
+            if self.canvas.text_change_unsaved():
+                self.st_manager.updateTextBlkList()
+            self.imgtrans_proj.dump_custom_script()
+            create_info_dialog(self.tr('Translation script exported to ') + self.tr('translations.txt'))
+        except Exception as e:
+            LOGGER.error(f'Failed to export translation script: {e}')
+            import traceback
+            LOGGER.error(traceback.format_exc())
+            create_error_dialog(e, self.tr('Failed to export translation script'))
 
     def on_reveal_file(self):
         current_img_path = self.imgtrans_proj.current_img_path()
