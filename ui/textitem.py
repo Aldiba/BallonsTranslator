@@ -389,6 +389,21 @@ class TextBlkItem(QGraphicsTextItem):
             self.repaint_background()
         self.doc_size_changed.emit(self.idx)
 
+    def setVerticalRtlMode(self, mode: int, repaint_background: bool = True):
+        self.is_formatting = True
+        if self.fontformat is not None:
+            self.fontformat.vertical_rtl_mode = mode
+        if self.layout is not None:
+            self.layout.reLayout()
+            if repaint_background:
+                self.repaint_background()
+            # 强制刷新 DeviceCoordinateCache，否则原字仍从旧的缓存 pixmap 显示
+            # 而描边（paint_stroke）每次新建临时布局，永远实时更新，造成两者不同步
+            self.setCacheMode(QGraphicsItem.CacheMode.NoCache)
+            self.update()
+            self.setCacheMode(QGraphicsItem.CacheMode.DeviceCoordinateCache)
+        self.is_formatting = False
+
     def updateUndoSteps(self):
         self.old_undo_steps = self.document().availableUndoSteps()
 

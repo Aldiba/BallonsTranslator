@@ -815,6 +815,18 @@ DrawToolCheckBox#DrawRectTool::indicator:checked {
     image: url(icons/bottombar_textblock_activate.svg);
 }
 
+DrawToolCheckBox#DrawStampTool::indicator {
+    image: url(icons/drawingtools_stamp.svg);
+}
+
+DrawToolCheckBox#DrawStampTool::indicator:hover {
+    image: url(icons/drawingtools_stamp_activate.svg);
+}
+
+DrawToolCheckBox#DrawStampTool::indicator:checked {
+    image: url(icons/drawingtools_stamp.svg);
+}
+
 GlobalSearchWidget {
     border-color: @borderColor;
     border-style: solid;
@@ -1077,4 +1089,55 @@ DeleteStyleButton {
 
 DeleteStyleButton::hover {
     background-color: #FF605C;
+}
+
+/* 样式组标签页 */
+QTabBar#StyleGroupTabBar {
+    background-color: transparent;
+    border: none;
+}
+
+QTabBar#StyleGroupTabBar::tab {
+    min-width: 40px;
+    min-height: 24px;
+    padding: 2px 10px;
+    margin: 0px;
+    border: 1px solid @borderColor;
+    border-bottom: none;
+    border-radius: 4px 4px 0px 0px;
+    background-color: @emptyContentBackgroundColor;
+    font-size: 12px;
+}
+
+QTabBar#StyleGroupTabBar::tab:selected {
+    background-color: @widgetBackgroundColor;
+    border-bottom: 1px solid @widgetBackgroundColor;
+}
+
+QTabBar#StyleGroupTabBar::tab:hover:!selected {
+    background-color: rgba(30, 147, 229, 12%);
+}
+
+QTabBar#StyleGroupTabBar::tab:!selected {
+    margin-top: 2px;
+}
+
+QPushButton#StyleGroupAddButton {
+    border: 1px solid @borderColor;
+    border-radius: 4px;
+    background-color: @emptyContentBackgroundColor;
+    font-size: 16px;
+    font-weight: bold;
+    min-width: 28px;
+    max-width: 28px;
+    min-height: 28px;
+    max-height: 28px;
+}
+
+QPushButton#StyleGroupAddButton:hover {
+    background-color: rgba(30, 147, 229, 12%);
+}
+
+QPushButton#StyleGroupAddButton:pressed {
+    background-color: rgba(30, 147, 229, 25%);
 }

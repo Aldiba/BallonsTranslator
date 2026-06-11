@@ -37,6 +37,23 @@ PUNSET_ROTATE_ALIGNL = {'「', '『', '“', '‘'}
 
 PUNSET_EASTERN_VERTICAL = {'。','、','，'}
 
+# \u7AD6\u6392\u6570\u5B57/\u5B57\u6BCD\u65CB\u8F6C\u6A21\u5F0F
+# 0 = \u6B63\u5E38\uFF08\u5168\u90E8\u65CB\u8F6C\uFF09, 1 = \u6570\u5B57\u6B63\u8FC7\u6765, 2 = \u5B57\u6BCD\u6B63\u8FC7\u6765, 3 = \u5168\u90E8\u6B63\u8FC7\u6765
+ASCII_DIGITS = set('0123456789')
+ASCII_LETTERS = set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz')
+
+def is_vert_rotatable(char: str, mode: int, punset: set = PUNSET_VERNEEDROTATE) -> bool:
+    """\u68C0\u67E5\u5B57\u7B26\u5728\u7AD6\u6392\u6A21\u5F0F\u4E0B\u662F\u5426\u9700\u8981\u65CB\u8F6C\uFF0C\u57FA\u4E8E\u5F53\u524D\u6A21\u5F0F\u3002"""
+    if char not in punset:
+        return False
+    if mode == 0:
+        return True
+    if mode in (1, 3) and char in ASCII_DIGITS:
+        return False
+    if mode in (2, 3) and char in ASCII_LETTERS:
+        return False
+    return True
+
 Dingbats_vertical_aligncenter = r'\u2700-\u275A\u2761-\u2767\u2776-\u27BF'
 Miscellaneous_Symbols_Pattern = r'\u2600-\u26FF'  # align center in vertical mode
 
@@ -539,10 +556,11 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                 if num_lspaces > 0:
                     space_shift = num_lspaces * cfmt.space_width
 
-                if char in _PUNSET_VERNEEDROTATE:
+                _vert_rtl_mode = self.fontformat.vertical_rtl_mode if self.fontformat else 0
+                if char in _PUNSET_VERNEEDROTATE and is_vert_rotatable(char, _vert_rtl_mode):
                     # 这里的 char 是闭包引用的，为了安全重新获取一下
                     char = blk_text[char_idx]
-                    
+
                     if char.isalpha():
                         xoff = 0
                         yoff = -line.ascent() - (line_width - cfmt.font_metrics.capHeight()) / 2
@@ -578,10 +596,12 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                             # 这里是你调整的 0.12 或 0.08
                         if char in PUNSET_LEFTSHIFT:
                             yoff += line_width * 0.38
-                            if char == '…':
-                                yoff -= line_width * 0.03
+                            if char == '…' or char == '⋯':
+                                yoff += line_width * 0.02
                             elif char == '～':
                                 yoff -= line_width * 0.07
+                            elif char == '—':
+                                yoff += line_width * 0.04
                             elif char == '~':
                                 yoff -= line_width * 0.1
                         # ================================
@@ -692,7 +712,7 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                 if line_width < 0:
                     line_width = cfmt.tbr.width()
                 
-                if char in _PUNSET_VERNEEDROTATE:
+                if char in _PUNSET_VERNEEDROTATE and is_vert_rotatable(char, self.fontformat.vertical_rtl_mode if self.fontformat else 0):
                     line_x, line_y = line.x(), line.y()
                     y_x = line_y - line_x
                     y_p_x = line_y + line_x
@@ -880,7 +900,7 @@ class VerticalTextDocumentLayout(SceneTextLayout):
 
                 tbr_h = cfmt.tbr.height() + let_sp_offset
                 char = blk_text[char_idx]
-                if char in PUNSET_VERNEEDROTATE:
+                if char in PUNSET_VERNEEDROTATE and is_vert_rotatable(char, self.fontformat.vertical_rtl_mode if self.fontformat else 0):
                     tbr, br = cfmt.punc_rect(char)
                     single_char_h = tbr.width()
                     tbr_h = tbr.width() * text_len
@@ -907,11 +927,12 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                                 if char == '—':
                                     tbr_h *= 0.84  # 破折号稍微给点重叠压榨，确保绝对的无缝粘连
                                 elif char == '…':
-                                    tbr_h *= 0.94
+                                    # tbr_h *= 0.94
+                                    tbr_h += cfmt.size * 0.07
                                 elif char == '.':
                                     tbr_h += cfmt.size * 0.08 # 连续句号之间给 0.15 倍字号的微小间隙，变成完美省略号
                                 elif char in {'.', '⋯'}:
-                                    tbr_h += cfmt.size * 0.13
+                                    tbr_h += cfmt.size * 0.18
                                 else:
                                     tbr_h -= let_sp_offset  # 其他符号抵消掉默认的底部字间距
                         else:

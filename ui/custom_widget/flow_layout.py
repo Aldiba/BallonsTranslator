@@ -40,6 +40,7 @@ class FlowLayout(QLayout):
     def insertWidget(self, idx: int, w: QWidget):
         self.addChildWidget(w)
         self.insertItem(idx, WidgetItem(w))
+        self.invalidate()
 
     def insertItem(self, idx:int, item):
         self._items.insert(idx, item)
@@ -106,7 +107,9 @@ class FlowLayout(QLayout):
     def removeWidget(self, widget):
         for i, item in enumerate(self._items):
             if item.widget() is widget:
-                return self.takeAt(i)
+                result = self.takeAt(i)
+                self.invalidate()
+                return result
 
     def removeAllWidgets(self):
         """ remove all widgets from layout """

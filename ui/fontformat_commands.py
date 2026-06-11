@@ -121,6 +121,11 @@ def ffmt_change_vertical(param_name: str, values: bool, act_ffmt: FontFormat, is
     for blkitem, value in zip(blkitems, values):
         blkitem.setVertical(value)
 
+@font_formating(push_undostack=True)
+def ffmt_change_vertical_rtl_mode(param_name: str, values: int, act_ffmt: FontFormat, is_global: bool, blkitems: List[TextBlkItem], **kwargs):
+    for blkitem, value in zip(blkitems, values):
+        blkitem.setVerticalRtlMode(value)
+
 @font_formating()
 def ffmt_change_frgb(param_name: str, values: tuple, act_ffmt: FontFormat, is_global: bool, blkitems: List[TextBlkItem], **kwargs):
     set_kwargs = global_default_set_kwargs if is_global else local_default_set_kwargs

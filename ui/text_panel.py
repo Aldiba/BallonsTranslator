@@ -9,7 +9,7 @@ from qtpy.QtGui import QFocusEvent, QMouseEvent, QTextCursor, QKeyEvent
 from utils import shared
 from utils import config as C
 from utils.fontformat import FontFormat, px2pt, LineSpacingType
-from .custom_widget import Widget, ColorPickerLabel, ClickableLabel, CheckableLabel, TextCheckerLabel, AlignmentChecker, QFontChecker, SizeComboBox, SizeControlLabel
+from .custom_widget import Widget, ColorPickerLabel, ClickableLabel, CheckableLabel, TextCheckerLabel, AlignmentChecker, QFontChecker, SizeComboBox, SizeControlLabel, SmallComboBox
 from .textitem import TextBlkItem
 from .text_advanced_format import TextAdvancedFormatPanel
 from .text_style_presets import TextStylePresetPanel
@@ -291,9 +291,17 @@ class FontFormatPanel(Widget):
         self.formatBtnGroup = FormatGroupBtn(self)
         self.formatBtnGroup.param_changed.connect(self.on_param_changed)
 
+        self.verticalRtlModeBox = SmallComboBox(options=[self.tr("竖排正常"), self.tr("数字正"), self.tr("字母正"), self.tr("全部正")], parent=self)
+        self.verticalRtlModeBox.setObjectName("VerticalRtlModeBox")
+        self.verticalRtlModeBox.setToolTip(self.tr("竖排数字/字母旋转模式"))
+        self.verticalRtlModeBox.setFixedWidth(70)
+        self.verticalRtlModeBox.currentIndexChanged.connect(lambda idx: self.on_param_changed('vertical_rtl_mode', idx))
+        self.verticalRtlModeBox.setEnabled(False)
+
         self.verticalChecker = QFontChecker(self)
         self.verticalChecker.setObjectName("FontVerticalChecker")
         self.verticalChecker.clicked.connect(lambda : self.on_param_changed('vertical', self.verticalChecker.isChecked()))
+        self.verticalChecker.toggled.connect(self.verticalRtlModeBox.setEnabled)
 
         self.strokeWidthBox = SizeComboBox([0, 10], 'stroke_width', self)
         self.strokeWidthBox.addItems(["0.1"])
@@ -390,6 +398,7 @@ class FontFormatPanel(Widget):
         hl2.addWidget(self.alignBtnGroup)
         hl2.addWidget(self.formatBtnGroup)
         hl2.addWidget(self.verticalChecker)
+        hl2.addWidget(self.verticalRtlModeBox)
         hl2.setSpacing(FONTFORMAT_SPACING)
         hl2.setContentsMargins(0, 0, 0, 0)
         hl3 = QHBoxLayout()
@@ -488,6 +497,10 @@ class FontFormatPanel(Widget):
         self.lineSpacingBox.setValue(font_format.line_spacing)
         self.letterSpacingBox.setValue(font_format.letter_spacing)
         self.verticalChecker.setChecked(font_format.vertical)
+        self.verticalRtlModeBox.blockSignals(True)
+        self.verticalRtlModeBox.setCurrentIndex(font_format.vertical_rtl_mode)
+        self.verticalRtlModeBox.setEnabled(font_format.vertical)
+        self.verticalRtlModeBox.blockSignals(False)
         self.formatBtnGroup.boldBtn.setChecked(font_format.bold)
         self.formatBtnGroup.underlineBtn.setChecked(font_format.underline)
         self.formatBtnGroup.italicBtn.setChecked(font_format.italic)

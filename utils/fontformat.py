@@ -83,6 +83,7 @@ class FontFormat(Config):
     gradient_size: float = 1.0
     _style_name: str = ''
     line_spacing_type: int = LineSpacingType.Proportional
+    vertical_rtl_mode: int = 0  # 0=正常(全部旋转), 1=数字正过来, 2=字母正过来, 3=全部正过来
 
     deprecated_attributes: dict = field(default_factory = lambda: dict())
 

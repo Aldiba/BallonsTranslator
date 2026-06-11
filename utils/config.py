@@ -84,6 +84,8 @@ class DrawPanelConfig(Config):
     pentool_shape: int = 0
     inpainter_width: float = 30.
     inpainter_shape: int = 0
+    stamptool_width: float = 30.
+    stamptool_shape: int = 0
     current_tool: int = 0
     rectool_auto: bool = False
     rectool_method: int = 0
@@ -184,7 +186,8 @@ class ProgramConfig(Config):
     
 
 pcfg = ProgramConfig()
-text_styles: List[FontFormat] = []
+text_style_groups: List[Dict] = []  # [{"name": str, "styles": List[FontFormat]}]
+text_styles: List[FontFormat] = []  # 已废弃，保留为别名兼容旧导入
 active_format: FontFormat = None
 
 def load_textstyle_from(p: str, raise_exception = False):
@@ -195,23 +198,43 @@ def load_textstyle_from(p: str, raise_exception = False):
 
     try:
         with open(p, 'r', encoding='utf8') as f:
-            style_list = json.loads(f.read())
+            raw = json.loads(f.read())
+
+        # 检测格式：新格式为 [{"name":..., "styles":[...]}], 旧格式为 [{...fontformat...}]
+        is_new_format = (
+            isinstance(raw, list) and len(raw) > 0
+            and isinstance(raw[0], dict) and "styles" in raw[0]
+        )
+
+        if is_new_format:
+            groups_loaded = []
+            for group in raw:
+                styles = []
+                for style in group.get("styles", []):
+                    try:
+                        styles.append(FontFormat(**style))
+                    except Exception as e:
+                        LOGGER.warning(f'Skip invalid text style in group "{group.get("name")}": {style}')
+                groups_loaded.append({"name": group.get("name", "未命名"), "styles": styles})
+        else:
+            # 旧格式：扁平列表 → 包裹到默认组
             styles_loaded = []
-            for style in style_list:
+            for style in raw:
                 try:
                     styles_loaded.append(FontFormat(**style))
                 except Exception as e:
                     LOGGER.warning(f'Skip invalid text style: {style}')
+            groups_loaded = [{"name": "默认", "styles": styles_loaded}]
+
     except Exception as e:
         LOGGER.error(f'Failed to load text style from {p}: {e}')
         if raise_exception:
             raise e
         return
 
-    global text_styles, pcfg
-    if len(text_styles) > 0:
-        text_styles.clear()
-    text_styles.extend(styles_loaded)
+    global text_style_groups, pcfg
+    text_style_groups.clear()
+    text_style_groups.extend(groups_loaded)
     pcfg.text_styles_path = p
 
 def load_config(config_path: str = shared.CONFIG_PATH):
@@ -272,14 +295,14 @@ def save_config():
     return True
 
 def save_text_styles(raise_exception = False):
-    global pcfg, text_styles
+    global pcfg, text_style_groups
     try:
         style_dir = osp.dirname(pcfg.text_styles_path)
         if not osp.exists(style_dir):
             os.makedirs(style_dir)
         tmp_save_tgt = pcfg.text_styles_path + '.tmp'
         with open(tmp_save_tgt, 'w', encoding='utf8') as f:
-            f.write(json_dump_nested_obj(text_styles))
+            f.write(json_dump_nested_obj(text_style_groups))
 
     except Exception as e:
         LOGGER.error(f'Failed save text style to {tmp_save_tgt}: {e}')

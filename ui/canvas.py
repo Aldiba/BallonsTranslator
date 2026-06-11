@@ -2,7 +2,7 @@ import numpy as np
 from typing import List, Union
 import os
 
-from qtpy.QtWidgets import QApplication, QSlider, QMenu, QGraphicsScene, QGraphicsSceneDragDropEvent , QGraphicsView, QGraphicsSceneDragDropEvent, QGraphicsRectItem, QGraphicsItem, QScrollBar, QGraphicsPixmapItem, QGraphicsSceneMouseEvent, QGraphicsSceneContextMenuEvent, QRubberBand, QGraphicsLineItem, QGraphicsPathItem
+from qtpy.QtWidgets import QApplication, QSlider, QMenu, QGraphicsScene, QGraphicsSceneDragDropEvent , QGraphicsView, QGraphicsSceneDragDropEvent, QGraphicsRectItem, QGraphicsItem, QScrollBar, QGraphicsPixmapItem, QGraphicsSceneMouseEvent, QGraphicsSceneContextMenuEvent, QRubberBand, QGraphicsLineItem, QGraphicsPathItem, QGraphicsEllipseItem
 from qtpy.QtCore import Qt, QDateTime, QRectF, QPointF, QPoint, Signal, QSizeF, QEvent
 from qtpy.QtGui import QKeySequence, QPixmap, QImage, QHideEvent, QKeyEvent, QWheelEvent, QResizeEvent, QPainter, QPen, QPainterPath, QCursor, QNativeGestureEvent, QColor
 
@@ -15,7 +15,7 @@ from .misc import ndarray2pixmap, QKEY, QNUMERIC_KEYS, ARROWKEY2DIRECTION
 from .textitem import TextBlkItem, TextBlock
 from .texteditshapecontrol import TextBlkShapeControl
 from .custom_widget import ScrollBar, FadeLabel
-from .image_edit import ImageEditMode, DrawingLayer, StrokeImgItem
+from .image_edit import ImageEditMode, DrawingLayer, StrokeImgItem, CloneStampItem
 from .page_search_widget import PageSearchWidget
 from utils import shared as C
 from utils.config import pcfg
@@ -162,8 +162,8 @@ class Canvas(QGraphicsScene):
     end_create_textblock = Signal(QRectF)
     paste2selected_textitems = Signal()
     end_create_rect = Signal(QRectF, int)
-    finish_painting = Signal(StrokeImgItem)
-    finish_erasing = Signal(StrokeImgItem)
+    finish_painting = Signal(QGraphicsItem)
+    finish_erasing = Signal(QGraphicsItem)
     delete_textblks = Signal(int)
     copy_textblks = Signal()
     paste_textblks = Signal(QPointF)
@@ -280,6 +280,14 @@ class Canvas(QGraphicsScene):
 
         self.stroke_img_item: StrokeImgItem = None
         self.erase_img_key = None
+
+        # Clone stamp state
+        self.clone_source: QPointF = None
+        self.clone_source_item: QGraphicsEllipseItem = None
+        self.clone_stamp_item: CloneStampItem = None
+        self.clone_preview_item: QGraphicsPixmapItem = None
+        self._clone_preview_pixmap: QPixmap = None
+        self._clone_last_src_scene: QPointF = None
 
         self.editor_index = 0 # 0: drawing 1: text editor
         self.mid_btn_pressed = False
@@ -568,25 +576,29 @@ class Canvas(QGraphicsScene):
             self.shift_line_preview = QGraphicsPathItem()
             pen = QPen()
             pen.setColor(QColor(0, 255, 255, 180))  # 青色带透明度
-            pen.setWidthF(1.5)
+            pen.setWidthF(1.5 / max(self.scale_factor, 0.01))
             pen.setStyle(Qt.PenStyle.DashLine)
             pen.setDashPattern([6, 4])
             self.shift_line_preview.setPen(pen)
             self.shift_line_preview.setZValue(999)
-            self.addItem(self.shift_line_preview)
+            self.shift_line_preview.setParentItem(self.baseLayer)
 
     def _update_line_preview(self, end_scene: QPointF):
-        """更新直线预览（使用scene坐标，两条平行线表示笔刷宽度）"""
+        """更新直线预览（使用baseLayer本地坐标，正确跟随缩放）"""
         if self.shift_line_preview is not None and self.shift_line_start is not None:
             path = QPainterPath()
 
+            # 转换为 baseLayer 本地坐标，使预览在缩放时保持一致
+            start_bl = self.baseLayer.mapFromScene(self.shift_line_start)
+            end_bl = self.baseLayer.mapFromScene(end_scene)
+
             # 计算垂直于线段的偏移方向
-            dx = end_scene.x() - self.shift_line_start.x()
-            dy = end_scene.y() - self.shift_line_start.y()
+            dx = end_bl.x() - start_bl.x()
+            dy = end_bl.y() - start_bl.y()
             length = (dx * dx + dy * dy) ** 0.5
             if length < 1:
                 # 起点画笔刷形状
-                self._add_brush_shape_to_path(path, self.shift_line_start)
+                self._add_brush_shape_to_path(path, start_bl)
                 self.shift_line_preview.setPath(path)
                 return
 
@@ -596,14 +608,14 @@ class Canvas(QGraphicsScene):
             brush_half = self.painting_pen.widthF() / 2
 
             # 两条平行线的起点和终点
-            x1 = self.shift_line_start.x() + nx * brush_half
-            y1 = self.shift_line_start.y() + ny * brush_half
-            x2 = end_scene.x() + nx * brush_half
-            y2 = end_scene.y() + ny * brush_half
-            x3 = self.shift_line_start.x() - nx * brush_half
-            y3 = self.shift_line_start.y() - ny * brush_half
-            x4 = end_scene.x() - nx * brush_half
-            y4 = end_scene.y() - ny * brush_half
+            x1 = start_bl.x() + nx * brush_half
+            y1 = start_bl.y() + ny * brush_half
+            x2 = end_bl.x() + nx * brush_half
+            y2 = end_bl.y() + ny * brush_half
+            x3 = start_bl.x() - nx * brush_half
+            y3 = start_bl.y() - ny * brush_half
+            x4 = end_bl.x() - nx * brush_half
+            y4 = end_bl.y() - ny * brush_half
 
             # 绘制两条平行线
             path.moveTo(x1, y1)
@@ -612,16 +624,15 @@ class Canvas(QGraphicsScene):
             path.lineTo(x4, y4)
 
             # 起点画笔刷形状
-            self._add_brush_shape_to_path(path, self.shift_line_start)
+            self._add_brush_shape_to_path(path, start_bl)
 
             self.shift_line_preview.setPath(path)
 
     def _add_brush_shape_to_path(self, path: QPainterPath, center: QPointF):
-        """在路径中添加笔刷形状（起点和终点的轮廓）"""
+        """在路径中添加笔刷形状（baseLayer本地坐标，自动匹配缩放）"""
         brush_size = self.painting_pen.widthF()
         half = brush_size / 2
         if self.painting_shape == 0:  # Circle
-            # 画空心椭圆
             path.addEllipse(center.x() - half, center.y() - half, brush_size, brush_size)
         else:  # Rectangle
             path.addRect(center.x() - half, center.y() - half, brush_size, brush_size)
@@ -681,7 +692,25 @@ class Canvas(QGraphicsScene):
                     rect = self.stroke_img_item.lineTo(pos, update=False)
                     if rect is not None:
                         self.drawingLayer.update(rect)
+
+        elif self.clone_stamp_item is not None and self.clone_stamp_item.is_painting:
+            pos = self.inpaintLayer.mapFromScene(event.scenePos())
+            self.clone_stamp_item.lineTo(pos)
+            # Move the source indicator to follow the brush offset
+            if self.clone_source is not None and self.clone_stamp_item._stroke_origin is not None:
+                src_local = self.inpaintLayer.mapFromScene(self.clone_source)
+                offset = pos - self.clone_stamp_item._stroke_origin
+                cur_src_local = src_local + offset
+                cur_src_scene = self.inpaintLayer.mapToScene(cur_src_local)
+                self._clone_last_src_scene = cur_src_scene
+                self._showCloneSourceIndicator(cur_src_scene)
         
+        elif (self.image_edit_mode == ImageEditMode.StampTool
+              and self.clone_source is not None
+              and self.clone_stamp_item is None):
+            # Show clone source preview at cursor position
+            self._updateClonePreview(event.scenePos())
+
         elif self.scale_tool_mode:
             self.scale_tool.emit(event.scenePos())
         
@@ -736,6 +765,138 @@ class Canvas(QGraphicsScene):
         origin = self.gv.mapFromGlobal(QCursor.pos())
         return self.gv.mapToScene(origin)
 
+    # ---- Clone Stamp Helpers ----
+
+    def setCloneSource(self, pos: QPointF):
+        """Set the clone source point (in scene coordinates)."""
+        self.clone_source = pos
+        self._showCloneSourceIndicator(pos)
+        self._buildClonePreviewPixmap()
+
+    def _showCloneSourceIndicator(self, pos: QPointF):
+        """Show a dashed circle + crosshair at the source position."""
+        self._hideCloneSourceIndicator()
+        pen = QPen(QColor(0, 255, 0, 200), 2, Qt.PenStyle.DashLine)
+        pen.setDashPattern([4, 4])
+        r = 12
+        self.clone_source_item = QGraphicsEllipseItem(pos.x() - r, pos.y() - r, r * 2, r * 2)
+        self.clone_source_item.setPen(pen)
+        self.clone_source_item.setZValue(1000)
+        self.addItem(self.clone_source_item)
+
+        # Crosshair lines
+        cross_len = 8
+        cross_pen = QPen(QColor(0, 255, 0, 200), 1.5)
+        h_line = QGraphicsLineItem(pos.x() - cross_len, pos.y(), pos.x() + cross_len, pos.y())
+        v_line = QGraphicsLineItem(pos.x(), pos.y() - cross_len, pos.x(), pos.y() + cross_len)
+        h_line.setPen(cross_pen)
+        v_line.setPen(cross_pen)
+        h_line.setZValue(1000)
+        v_line.setZValue(1000)
+        h_line.setParentItem(self.clone_source_item)
+        v_line.setParentItem(self.clone_source_item)
+
+    def _hideCloneSourceIndicator(self):
+        if self.clone_source_item is not None:
+            if self.clone_source_item.scene() == self:
+                self.removeItem(self.clone_source_item)
+            self.clone_source_item = None
+
+    def startCloneStampStroke(self, pos: QPointF):
+        """Begin a clone stamp stroke at pos (image-local coords)."""
+        if self.clone_source is None:
+            return
+        self._hideClonePreview()
+        # Snapshot current inpainted_array as the clone source image
+        src_pixmap = ndarray2pixmap(self.imgtrans_proj.inpainted_array)
+        src_qimg = src_pixmap.toImage().convertToFormat(QImage.Format.Format_ARGB32_Premultiplied)
+        source_local = self.inpaintLayer.mapFromScene(self.clone_source)
+        pen = QPen(Qt.GlobalColor.transparent, self.painting_pen.widthF())
+        self.clone_stamp_item = CloneStampItem(
+            src_qimg, source_local, pen, pos,
+            self.img_window_size(), shape=self.painting_shape
+        )
+        self.clone_stamp_item.setParentItem(self.baseLayer)
+        self.clone_stamp_item.setZValue(50)
+
+    def finishCloneStampStroke(self):
+        if self.clone_stamp_item is not None:
+            # Update source point to last tracked position (follow offset)
+            if self._clone_last_src_scene is not None:
+                self.clone_source = self._clone_last_src_scene
+                self._clone_last_src_scene = None
+                self._buildClonePreviewPixmap()
+            self.finish_painting.emit(self.clone_stamp_item)
+            self.clone_stamp_item = None
+
+    def rebuildClonePreview(self):
+        """Rebuild the preview pixmap (e.g. after brush size change)."""
+        self._clone_preview_pixmap = None
+        self._buildClonePreviewPixmap()
+
+    # ---- Clone Preview Helpers ----
+
+    def _buildClonePreviewPixmap(self):
+        """Extract brush-shaped patch from source, cache as semi-transparent pixmap."""
+        self._clone_preview_pixmap = None
+        if self.clone_source is None or not self.imgtrans_proj.inpainted_valid:
+            return
+        size = self.painting_pen.widthF()
+        if size < 2:
+            size = 2
+        r = size / 2.0
+        src_local = self.inpaintLayer.mapFromScene(self.clone_source)
+        sx, sy = int(src_local.x() - r), int(src_local.y() - r)
+        sw, sh = int(size), int(size)
+
+        # Clamp to image bounds
+        img_h, img_w = self.imgtrans_proj.inpainted_array.shape[:2]
+        sx = max(0, min(sx, img_w - 2))
+        sy = max(0, min(sy, img_h - 2))
+        sw = min(sw, img_w - sx)
+        sh = min(sh, img_h - sy)
+        if sw < 1 or sh < 1:
+            return
+
+        patch = self.imgtrans_proj.inpainted_array[sy:sy+sh, sx:sx+sw]
+        base_pm = ndarray2pixmap(patch)
+
+        # Apply shape mask (circle → clip to ellipse)
+        if self.painting_shape == 0:  # Circle
+            masked = QPixmap(base_pm.size())
+            masked.fill(Qt.GlobalColor.transparent)
+            p = QPainter(masked)
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+            path = QPainterPath()
+            path.addEllipse(0, 0, base_pm.width(), base_pm.height())
+            p.setClipPath(path)
+            p.drawPixmap(0, 0, base_pm)
+            p.end()
+            self._clone_preview_pixmap = masked
+        else:
+            self._clone_preview_pixmap = QPixmap(base_pm)
+
+    def _updateClonePreview(self, scene_pos: QPointF):
+        """Position the semi-transparent source preview at cursor, scaled with zoom."""
+        if self._clone_preview_pixmap is None:
+            return
+        if self.clone_preview_item is None:
+            self.clone_preview_item = QGraphicsPixmapItem()
+            self.clone_preview_item.setOpacity(0.45)
+            self.clone_preview_item.setZValue(999)
+            self.clone_preview_item.setParentItem(self.baseLayer)
+        self.clone_preview_item.setPixmap(self._clone_preview_pixmap)
+
+        half = self._clone_preview_pixmap.width() / 2.0
+        local_pos = self.baseLayer.mapFromScene(scene_pos)
+        self.clone_preview_item.setPos(local_pos.x() - half, local_pos.y() - half)
+
+    def _hideClonePreview(self):
+        if self.clone_preview_item is not None:
+            if self.clone_preview_item.scene() == self:
+                self.removeItem(self.clone_preview_item)
+            self.clone_preview_item = None
+
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         btn = event.button()
         if btn == Qt.MouseButton.MiddleButton:
@@ -755,12 +916,17 @@ class Canvas(QGraphicsScene):
                 # user is drawing using the pen/inpainting tool
                 if self.scale_tool_mode:
                     self.begin_scale_tool.emit(event.scenePos())
+                elif self.image_edit_mode == ImageEditMode.StampTool and self.gv.ctrl_pressed:
+                    # Ctrl+Click in StampTool mode → set clone source
+                    self.setCloneSource(event.scenePos())
                 elif self.painting:
                     shift_pressed = (event.modifiers() & Qt.KeyboardModifier.ShiftModifier)
                     current_pos = self.inpaintLayer.mapFromScene(event.scenePos())
 
-                    # Shift+拖拽画直线
-                    if shift_pressed:
+                    if self.image_edit_mode == ImageEditMode.StampTool:
+                        # Clone stamp: use CloneStampItem instead of StrokeImgItem
+                        self.startCloneStampStroke(current_pos)
+                    elif shift_pressed:
                         self.shift_line_start = event.scenePos()
                         self._create_line_preview(event.scenePos())
                         return
@@ -770,7 +936,7 @@ class Canvas(QGraphicsScene):
 
             elif btn == Qt.MouseButton.RightButton:
                 # user is drawing using eraser
-                if self.painting:
+                if self.painting and self.image_edit_mode != ImageEditMode.StampTool:
                     erasing = self.image_edit_mode == ImageEditMode.PenTool
                     self.addStrokeImageItem(self.inpaintLayer.mapFromScene(event.scenePos()), self.erasing_pen, erasing)
                 else:   # rubber band selection
@@ -810,6 +976,8 @@ class Canvas(QGraphicsScene):
                 self.shift_line_start = None
             elif self.stroke_img_item is not None:
                 self.finish_painting.emit(self.stroke_img_item)
+            elif self.clone_stamp_item is not None:
+                self.finishCloneStampStroke()
             elif self.scale_tool_mode:
                 self.end_scale_tool.emit()
         return super().mouseReleaseEvent(event)
@@ -818,6 +986,11 @@ class Canvas(QGraphicsScene):
         self.editing_textblkitem = None
         self.stroke_img_item = None
         self.erase_img_key = None
+        self.clone_source = None
+        self._clone_preview_pixmap = None
+        self.clone_stamp_item = None
+        self._hideCloneSourceIndicator()
+        self._hideClonePreview()
         self.txtblkShapeControl.setBlkItem(None)
         self.mid_btn_pressed = False
         self.search_widget.reInitialize()
@@ -868,7 +1041,9 @@ class Canvas(QGraphicsScene):
 
     @property
     def painting(self):
-        return self.image_edit_mode == ImageEditMode.PenTool or self.image_edit_mode == ImageEditMode.InpaintTool
+        return (self.image_edit_mode == ImageEditMode.PenTool
+                or self.image_edit_mode == ImageEditMode.InpaintTool
+                or self.image_edit_mode == ImageEditMode.StampTool)
 
     def setMaskTransparencyBySlider(self, slider_value: int):
         self.setMaskTransparency(slider_value / 100)
@@ -981,8 +1156,14 @@ class Canvas(QGraphicsScene):
         self.create_block_origin = None
         self.editing_textblkitem = None
         self.gv.ctrl_pressed = False
+        self.clone_source = None
+        self._clone_preview_pixmap = None
+        self._hideCloneSourceIndicator()
+        self._hideClonePreview()
         if self.stroke_img_item is not None:
             self.removeItem(self.stroke_img_item)
+        if self.clone_stamp_item is not None:
+            self.finishCloneStampStroke()
 
     def setProjSaveState(self, un_saved: bool):
         if un_saved == self.projstate_unsaved:
@@ -998,6 +1179,9 @@ class Canvas(QGraphicsScene):
             item.setParentItem(None)
             self.stroke_img_item = None
             self.erase_img_key = None
+        elif isinstance(item, CloneStampItem):
+            item.setParentItem(None)
+            self.clone_stamp_item = None
         self.block_selection_signal = False
 
     def get_active_undostack(self) -> QUndoStack:

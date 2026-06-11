@@ -20,7 +20,7 @@ from utils.message import create_error_dialog, create_info_dialog
 from modules.translators.trans_chatgpt import GPTTranslator
 from modules import GET_VALID_TEXTDETECTORS, GET_VALID_INPAINTERS, GET_VALID_TRANSLATORS, GET_VALID_OCR
 from .misc import parse_stylesheet, set_html_family, QKEY
-from utils.config import ProgramConfig, pcfg, save_config, text_styles, save_text_styles, load_textstyle_from, FontFormat
+from utils.config import ProgramConfig, pcfg, save_config, text_styles, text_style_groups, save_text_styles, load_textstyle_from, FontFormat
 from utils.proj_imgtrans import ProjImgTrans
 from .canvas import Canvas
 from .configpanel import ConfigPanel
@@ -402,7 +402,7 @@ class MainWindow(mainwindow_cls):
         elif pcfg.imgtrans_paintmode:
             self.bottomBar.paintChecker.click()
 
-        self.textPanel.formatpanel.textstyle_panel.initStyles(text_styles)
+        self.textPanel.formatpanel.textstyle_panel.initGroups(text_style_groups)
 
         self.canvas.search_widget.whole_word_toggle.setChecked(pcfg.fsearch_whole_word)
         self.canvas.search_widget.case_sensitive_toggle.setChecked(pcfg.fsearch_case)
@@ -468,7 +468,7 @@ class MainWindow(mainwindow_cls):
             text_style_path = 'config/textstyles/default.json'
         if osp.exists(text_style_path):
             load_textstyle_from(text_style_path)
-            self.textPanel.formatpanel.textstyle_panel.setStyles(text_styles)
+            self.textPanel.formatpanel.textstyle_panel.setGroups(text_style_groups)
         else:
             pcfg.text_styles_path = text_style_path
             save_text_styles()
@@ -1385,7 +1385,7 @@ class MainWindow(mainwindow_cls):
         try:
             load_textstyle_from(p, raise_exception=True)
             save_config()
-            self.textPanel.formatpanel.textstyle_panel.setStyles(text_styles)
+            self.textPanel.formatpanel.textstyle_panel.setGroups(text_style_groups)
         except Exception as e:
             create_error_dialog(e, self.tr(f'Failed to load from {p}'))
 
@@ -1541,13 +1541,13 @@ class MainWindow(mainwindow_cls):
 
     def on_reveal_file(self):
         current_img_path = self.imgtrans_proj.current_img_path()
+        if current_img_path is None:
+            return
         if sys.platform == 'win32':
-            # qprocess seems to fuck up with "\""
-            p = "\""+str(Path(current_img_path))+"\""
-            subprocess.Popen("explorer.exe /select,"+p, shell=True)
+            # 使用参数列表方式避免 shell 转义问题
+            subprocess.Popen(['explorer.exe', '/select,', os.path.normpath(current_img_path)])
         elif sys.platform == 'darwin':
-            p = "\""+current_img_path+"\""
-            subprocess.Popen("open -R "+p, shell=True)
+            subprocess.Popen(['open', '-R', current_img_path])
 
     def on_set_gsearch_widget(self):
         setup = self.leftBar.globalSearchChecker.isChecked()
