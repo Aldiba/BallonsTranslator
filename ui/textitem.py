@@ -124,51 +124,61 @@ class TextBlkItem(QGraphicsTextItem):
             self.update()
 
     def paint_stroke(self, painter: QPainter):
-        doc = QTextDocument()
-        doc.setUndoRedoEnabled(False)
-        doc.setDocumentMargin(self.document().documentMargin())
-        doc.setDefaultFont(self.document().defaultFont())
-        doc.setHtml(self.document().toHtml())
-        doc.setDefaultTextOption(self.document().defaultTextOption())
-        cursor = QTextCursor(doc)
-        block = doc.firstBlock()
-        stroke_pen = QPen(self.stroke_qcolor, 0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
+        strokes = self.fontformat.effective_strokes
+        if not strokes:
+            return
+
         letter_spacing = self.fontformat.letter_spacing * 100
-        while block.isValid():
-            it = block.begin()
-            while not it.atEnd():
-                fragment = it.fragment()
-                cfmt = fragment.charFormat()
-                sw = pt2px(cfmt.fontPointSize()) * self.fontformat.stroke_width
-                stroke_pen.setWidthF(sw)
-                pos1 = fragment.position()
-                pos2 = pos1 + fragment.length()
-                cursor.setPosition(pos1)
-                cursor.setPosition(pos2, QTextCursor.MoveMode.KeepAnchor)
-                cfmt.setTextOutline(stroke_pen)
-                if letter_spacing != 100 and not self.fontformat.vertical:
-                    cfmt.setFontLetterSpacingType(QFont.SpacingType.PercentageSpacing)
-                    cfmt.setFontLetterSpacing(letter_spacing)
-                cursor.mergeCharFormat(cfmt)
-                it += 1
-            block = block.next()
+        total_width = sum(s["width"] for s in strokes)
+        cumulative = total_width
 
-        layout = VerticalTextDocumentLayout(doc, self.fontformat) if self.fontformat.vertical \
-            else HorizontalTextDocumentLayout(doc, self.fontformat)
-        layout._draw_offset = self.layout._draw_offset
-        layout._is_painting_stroke = True
-        layout.setMaxSize(self.layout.max_width, self.layout.max_height, False)
-        doc.setDocumentLayout(layout)
+        for stroke in strokes:
+            doc = QTextDocument()
+            doc.setUndoRedoEnabled(False)
+            doc.setDocumentMargin(self.document().documentMargin())
+            doc.setDefaultFont(self.document().defaultFont())
+            doc.setHtml(self.document().toHtml())
+            doc.setDefaultTextOption(self.document().defaultTextOption())
+            cursor = QTextCursor(doc)
+            block = doc.firstBlock()
+            stroke_color = stroke.get("color", [0, 0, 0])
+            stroke_pen = QPen(QColor(*stroke_color), 0, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
+            while block.isValid():
+                it = block.begin()
+                while not it.atEnd():
+                    fragment = it.fragment()
+                    cfmt = fragment.charFormat()
+                    sw = pt2px(cfmt.fontPointSize()) * cumulative
+                    stroke_pen.setWidthF(sw)
+                    pos1 = fragment.position()
+                    pos2 = pos1 + fragment.length()
+                    cursor.setPosition(pos1)
+                    cursor.setPosition(pos2, QTextCursor.MoveMode.KeepAnchor)
+                    cfmt.setTextOutline(stroke_pen)
+                    if letter_spacing != 100 and not self.fontformat.vertical:
+                        cfmt.setFontLetterSpacingType(QFont.SpacingType.PercentageSpacing)
+                        cfmt.setFontLetterSpacing(letter_spacing)
+                    cursor.mergeCharFormat(cfmt)
+                    it += 1
+                block = block.next()
 
-        layout.relayout_on_changed = False
-        doc.drawContents(painter)
+            layout = VerticalTextDocumentLayout(doc, self.fontformat) if self.fontformat.vertical \
+                else HorizontalTextDocumentLayout(doc, self.fontformat)
+            layout._draw_offset = self.layout._draw_offset
+            layout._is_painting_stroke = True
+            layout.setMaxSize(self.layout.max_width, self.layout.max_height, False)
+            doc.setDocumentLayout(layout)
+            layout.relayout_on_changed = False
+            doc.drawContents(painter)
+
+            cumulative -= stroke["width"]
 
     def repaint_background(self):
         empty = self.document().isEmpty()
         if self.repainting:
             return
 
-        paint_stroke = self.fontformat.stroke_width > 0
+        paint_stroke = self.fontformat.has_stroke
         paint_shadow = self.fontformat.shadow_radius > 0 and self.fontformat.shadow_strength > 0
         if not paint_shadow and not paint_stroke or empty:
             self.background_pixmap = None
@@ -947,6 +957,26 @@ class TextBlkItem(QGraphicsTextItem):
         if repaint_background:
             self.update()
 
+    def setStrokes(self, strokes: list, repaint_background=True):
+        """设置多重描边列表，每项: {"width": float, "color": [R,G,B,A]}"""
+        self.is_formatting = True
+        self.fontformat.strokes = strokes
+        if strokes:
+            # sync backward compat fields from first stroke
+            self.fontformat.stroke_width = strokes[0]["width"]
+            sc = strokes[0].get("color", [0, 0, 0])
+            self.stroke_qcolor = QColor(*sc)
+            self.fontformat.srgb = [self.stroke_qcolor.red(), self.stroke_qcolor.green(), self.stroke_qcolor.blue(), self.stroke_qcolor.alpha()]
+            # padding based on widest stroke (not just first)
+            max_w = max(s["width"] for s in strokes)
+            if max_w > 0:
+                p = self.layout.max_font_size(to_px=True) * (max_w + 0.05) / 2
+                self.setPadding(p)
+        if repaint_background:
+            self.repaint_background()
+            self.update()
+        self.is_formatting = False
+
     def setRelFontSize(self, value: float, repaint_background: bool = False, set_selected: bool = False, restore_cursor: bool = False, clip_size: bool = False, **kwargs):
         self.layout.relayout_on_changed = False
         _, after_kwargs = self._before_set_ffmt(set_selected, restore_cursor)
@@ -983,12 +1013,12 @@ class TextBlkItem(QGraphicsTextItem):
         
         cursor, after_kwargs = self._before_set_ffmt(set_selected=set_selected, restore_cursor=restore_cursor)
         self.layout.relayout_on_changed = False
-        if self.fontformat.stroke_width != 0:
+        if self.fontformat.has_stroke:
             repaint_background = True
         if repaint_background:
             fs = pt2px(max(self.layout.max_font_size(), value))
             self.layout.relayout_on_changed = False
-            if self.fontformat.stroke_width > 0:
+            if self.fontformat.has_stroke:
                 self.setPadding(fs * (self.fontformat.stroke_width + 0.05) / 2)
             self.layout.relayout_on_changed = True
         cfmt = QTextCharFormat()

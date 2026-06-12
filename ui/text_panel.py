@@ -2,14 +2,14 @@ import copy
 import sys
 from typing import List
 
-from qtpy.QtWidgets import QLineEdit, QSizePolicy, QHBoxLayout, QVBoxLayout, QFrame, QFontComboBox, QApplication, QPushButton, QLabel, QGroupBox, QCheckBox, QSlider
+from qtpy.QtWidgets import QLineEdit, QSizePolicy, QHBoxLayout, QVBoxLayout, QFrame, QFontComboBox, QApplication, QPushButton, QLabel, QGroupBox, QCheckBox, QSlider, QDoubleSpinBox, QWidget
 from qtpy.QtCore import Signal, Qt
 from qtpy.QtGui import QFocusEvent, QMouseEvent, QTextCursor, QKeyEvent
 
 from utils import shared
 from utils import config as C
 from utils.fontformat import FontFormat, px2pt, LineSpacingType
-from .custom_widget import Widget, ColorPickerLabel, ClickableLabel, CheckableLabel, TextCheckerLabel, AlignmentChecker, QFontChecker, SizeComboBox, SizeControlLabel, SmallComboBox
+from .custom_widget import Widget, ColorPickerLabel, SmallColorPickerLabel, ClickableLabel, CheckableLabel, TextCheckerLabel, AlignmentChecker, QFontChecker, SizeComboBox, SizeControlLabel, SmallComboBox
 from .textitem import TextBlkItem
 from .text_advanced_format import TextAdvancedFormatPanel
 from .text_style_presets import TextStylePresetPanel
@@ -326,6 +326,13 @@ class FontFormatPanel(Widget):
         stroke_hlayout.addWidget(self.fontStrokeLabel)
         stroke_hlayout.addWidget(self.strokeWidthBox)
         stroke_hlayout.addWidget(self.strokeColorPicker)
+        self.multiStrokeBtn = QPushButton("M", self)
+        self.multiStrokeBtn.setFixedWidth(22)
+        self.multiStrokeBtn.setFixedHeight(22)
+        self.multiStrokeBtn.setCheckable(True)
+        self.multiStrokeBtn.setToolTip(self.tr("多重描边"))
+        self.multiStrokeBtn.toggled.connect(self.on_multi_stroke_toggled)
+        stroke_hlayout.addWidget(self.multiStrokeBtn)
         stroke_hlayout.setSpacing(shared.WIDGET_SPACING_CLOSE)
 
         self.letterSpacingBox = SizeComboBox([0, 10], "letter_spacing", self)
@@ -418,10 +425,29 @@ class FontFormatPanel(Widget):
         hl4.setContentsMargins(0, 12, 0, 0)
         hl4.setSpacing(0)
 
+        # 多重描边 UI
+        self.multiStrokeWidget = QWidget(self)
+        self.multiStrokeWidget.setVisible(False)
+        self.multiStrokeVBox = QVBoxLayout(self.multiStrokeWidget)
+        self.multiStrokeVBox.setContentsMargins(6, 2, 6, 2)
+        self.multiStrokeVBox.setSpacing(3)
+
+        self.strokeRowsLayout = QVBoxLayout()
+        self.strokeRowsLayout.setSpacing(3)
+        self.multiStrokeVBox.addLayout(self.strokeRowsLayout)
+        self.stroke_rows = []  # list of (cp, ws, vis_btn, up_btn, dn_btn, del_btn, row_widget)
+        self._rebuilding_strokes = False
+
+        add_stroke_btn = QPushButton(self.tr("+ 添加描边"))
+        add_stroke_btn.setFixedHeight(20)
+        add_stroke_btn.clicked.connect(self._add_stroke_row)
+        self.multiStrokeVBox.addWidget(add_stroke_btn)
+
         self.vlayout.addLayout(vl0)
         self.vlayout.addLayout(hl1)
         self.vlayout.addLayout(hl2)
         self.vlayout.addLayout(hl3)
+        self.vlayout.addWidget(self.multiStrokeWidget)
         self.vlayout.addLayout(hl4)
         self.vlayout.setContentsMargins(0, 0, 7, 0)
         self.vlayout.setSpacing(0)
@@ -509,6 +535,14 @@ class FontFormatPanel(Widget):
         self.familybox.blockSignals(False)
         self.textadvancedfmt_panel.set_active_format(font_format)
 
+        # 同步多重描边 UI
+        self._rebuild_stroke_rows(font_format.strokes)
+        has_multi = len(font_format.strokes) > 0
+        self.multiStrokeBtn.blockSignals(True)
+        self.multiStrokeBtn.setChecked(has_multi)
+        self.multiStrokeBtn.blockSignals(False)
+        self.multiStrokeWidget.setVisible(has_multi)
+
     def set_globalfmt_title(self):
         active_text_style_label = self.active_text_style_label()
         if active_text_style_label is None:
@@ -518,6 +552,144 @@ class FontFormatPanel(Widget):
             valid_title = self.textstyle_panel.elidedText(title)
             self.textstyle_panel.setTitle(valid_title)
 
+
+    # ── 多重描边 ──────────────────────────────────────────
+
+    def on_multi_stroke_toggled(self, checked: bool):
+        self.multiStrokeWidget.setVisible(checked)
+        if checked:
+            if not self.stroke_rows:
+                self._add_stroke_row(
+                    width=self.strokeWidthBox.value(),
+                    color=list(self.strokeColorPicker.rgb())
+                )
+        else:
+            for entry in list(self.stroke_rows):
+                self._remove_stroke_row(entry)
+            self.on_param_changed('strokes', [])
+
+    def _add_stroke_row(self, width=0.0, color=None, enabled=True):
+        row_widget = QWidget()
+        row_layout = QHBoxLayout(row_widget)
+        row_layout.setContentsMargins(0, 0, 0, 0)
+        row_layout.setSpacing(3)
+
+        up_btn = QPushButton("▲", row_widget)
+        up_btn.setFixedWidth(20)
+        up_btn.setFixedHeight(20)
+        up_btn.setToolTip(self.tr("上移"))
+
+        dn_btn = QPushButton("▼", row_widget)
+        dn_btn.setFixedWidth(20)
+        dn_btn.setFixedHeight(20)
+        dn_btn.setToolTip(self.tr("下移"))
+
+        vis_btn = QPushButton("●", row_widget)
+        vis_btn.setFixedWidth(20)
+        vis_btn.setFixedHeight(20)
+        vis_btn.setCheckable(True)
+        vis_btn.setChecked(enabled)
+        vis_btn.setToolTip(self.tr("可见/隐藏"))
+        self._apply_vis_style(vis_btn, enabled)
+
+        cp = SmallColorPickerLabel(row_widget)
+        cp.setPickerColor(color or [0, 0, 0, 255])
+        cp.setFixedSize(18, 18)
+
+        ws = QDoubleSpinBox(row_widget)
+        ws.setRange(0, 99)
+        ws.setSingleStep(0.1)
+        ws.setDecimals(3)
+        ws.setValue(width)
+        ws.setFixedWidth(62)
+
+        del_btn = QPushButton("×", row_widget)
+        del_btn.setFixedWidth(18)
+        del_btn.setFixedHeight(18)
+        del_btn.setToolTip(self.tr("删除此描边"))
+
+        row_layout.addWidget(up_btn)
+        row_layout.addWidget(dn_btn)
+        row_layout.addWidget(vis_btn)
+        row_layout.addWidget(cp)
+        row_layout.addWidget(ws)
+        row_layout.addWidget(del_btn)
+        row_layout.addStretch()
+
+        idx = len(self.stroke_rows)
+        self.strokeRowsLayout.insertWidget(idx, row_widget)
+        entry = (cp, ws, vis_btn, up_btn, dn_btn, del_btn, row_widget)
+        self.stroke_rows.append(entry)
+
+        cp.colorChanged.connect(lambda _v, e=entry: self._on_stroke_row_changed())
+        ws.valueChanged.connect(lambda _v, e=entry: self._on_stroke_row_changed())
+        vis_btn.toggled.connect(lambda checked, e=entry: self._on_vis_toggled(e, checked))
+        up_btn.clicked.connect(lambda e=entry: self._move_stroke(e, -1))
+        dn_btn.clicked.connect(lambda e=entry: self._move_stroke(e, +1))
+        del_btn.clicked.connect(lambda e=entry: self._remove_stroke_row(e))
+        self._on_stroke_row_changed()
+
+    @staticmethod
+    def _apply_vis_style(btn, enabled):
+        if enabled:
+            btn.setText("●")
+            btn.setStyleSheet("color: #555;")
+        else:
+            btn.setText("○")
+            btn.setStyleSheet("color: #bbb;")
+
+    def _on_vis_toggled(self, entry, checked):
+        _cp, _ws, vis_btn, _up, _dn, _del, _rw = entry
+        self._apply_vis_style(vis_btn, checked)
+        self._on_stroke_row_changed()
+
+    def _move_stroke(self, entry, direction):
+        idx = self.stroke_rows.index(entry)
+        target = idx + direction
+        if target < 0 or target >= len(self.stroke_rows):
+            return
+        self.stroke_rows[idx], self.stroke_rows[target] = self.stroke_rows[target], self.stroke_rows[idx]
+        w_a = self.stroke_rows[target][-1]
+        w_b = self.stroke_rows[idx][-1]
+        self.strokeRowsLayout.removeWidget(w_a)
+        self.strokeRowsLayout.removeWidget(w_b)
+        self.strokeRowsLayout.insertWidget(target, w_a)
+        self.strokeRowsLayout.insertWidget(idx, w_b)
+        self._on_stroke_row_changed()
+
+    def _remove_stroke_row(self, entry):
+        self.stroke_rows.remove(entry)
+        entry[-1].deleteLater()
+        self._on_stroke_row_changed()
+
+    def _collect_strokes(self) -> list:
+        strokes = []
+        for cp, ws, vis_btn, _up, _dn, _del, _rw in self.stroke_rows:
+            strokes.append({
+                "width": ws.value(),
+                "color": list(cp.rgb()),
+                "enabled": vis_btn.isChecked(),
+            })
+        return strokes
+
+    def _on_stroke_row_changed(self):
+        if self._rebuilding_strokes:
+            return
+        strokes = self._collect_strokes()
+        self.on_param_changed('strokes', strokes)
+
+    def _rebuild_stroke_rows(self, strokes: list):
+        self._rebuilding_strokes = True
+        for entry in list(self.stroke_rows):
+            self._remove_stroke_row(entry)
+        if strokes:
+            for s in strokes:
+                self._add_stroke_row(
+                    width=s.get("width", 0),
+                    color=s.get("color", [0, 0, 0, 255]),
+                    enabled=s.get("enabled", True),
+                )
+        self._rebuilding_strokes = False
 
     def deactivate_style_label(self):
         if self.active_text_style_label() is not None:

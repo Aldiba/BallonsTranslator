@@ -144,6 +144,11 @@ def ffmt_change_stroke_width(param_name: str, values: float, act_ffmt: FontForma
     for blkitem, value in zip(blkitems, values):
         blkitem.setStrokeWidth(value, **set_kwargs)
 
+@font_formating(push_undostack=True)
+def ffmt_change_strokes(param_name: str, values: list, act_ffmt: FontFormat, is_global: bool, blkitems: List[TextBlkItem], **kwargs):
+    for blkitem, value in zip(blkitems, values):
+        blkitem.setStrokes(value)
+
 @font_formating()
 def ffmt_change_font_size(param_name: str, values: float, act_ffmt: FontFormat, is_global: bool, blkitems: List[TextBlkItem], clip_size=False, **kwargs):
     set_kwargs = global_default_set_kwargs if is_global else local_default_set_kwargs

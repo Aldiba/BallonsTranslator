@@ -84,6 +84,7 @@ class FontFormat(Config):
     _style_name: str = ''
     line_spacing_type: int = LineSpacingType.Proportional
     vertical_rtl_mode: int = 0  # 0=正常(全部旋转), 1=数字正过来, 2=字母正过来, 3=全部正过来
+    strokes: List = field(default_factory=list)  # 多重描边: [{"width": float, "color": [R,G,B,A]}, ...] 从外到内
 
     deprecated_attributes: dict = field(default_factory = lambda: dict())
 
@@ -135,3 +136,19 @@ class FontFormat(Config):
 
     def stroke_color(self):
         return [int(round(x)) for x in self.srgb]
+
+    @property
+    def effective_strokes(self) -> list:
+        """返回有效描边列表。向后兼容: strokes 为空时从 stroke_width + srgb 构造。"""
+        if self.strokes:
+            return [s for s in self.strokes if s.get("enabled", True)]
+        if self.stroke_width > 0:
+            return [{"width": self.stroke_width, "color": self.stroke_color()}]
+        return []
+
+    @property
+    def has_stroke(self) -> bool:
+        """是否有任何有效描边"""
+        if self.strokes:
+            return any(s.get("enabled", True) and s.get("width", 0) > 0 for s in self.strokes)
+        return self.stroke_width > 0
