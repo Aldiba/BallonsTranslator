@@ -820,57 +820,42 @@ class DrawingPanel(Widget):
 
     def on_finish_erasing(self, stroke_item: StrokeImgItem):
         stroke_item.finishPainting()
-        # inpainted-erasing logic is essentially the same as inpainting
         if self.currentTool == self.inpaintTool:
             rect, stroke_mask, _ = stroke_item.clip(mask_only=True)
             if stroke_mask is None:
                 self.canvas.removeItem(stroke_item)
                 return
             # stroke_mask: 255 where user drew, 0 elsewhere in bounding rect
-            mask_h, mask_w = stroke_mask.shape[:2]
-            mask_x, mask_y = rect[0], rect[1]
-            inpaint_rect = [mask_x, mask_y, mask_w + mask_x, mask_h + mask_y]
-            origin = self.canvas.imgtrans_proj.img_array
-            origin = origin[inpaint_rect[1]: inpaint_rect[3], inpaint_rect[0]: inpaint_rect[2]]
-            inpainted = self.canvas.imgtrans_proj.inpainted_array
-            inpainted = inpainted[inpaint_rect[1]: inpaint_rect[3], inpaint_rect[0]: inpaint_rect[2]]
-            existing_mask = self.canvas.imgtrans_proj.mask_array[inpaint_rect[1]: inpaint_rect[3], inpaint_rect[0]: inpaint_rect[2]]
-            # no inpainted area to erase
-            if existing_mask.sum() == 0:
-                self.canvas.removeItem(stroke_item)
-                return
+            x, y, w, h = rect
+            inpaint_rect = [x, y, x + w, y + h]
+            imgtrans = self.canvas.imgtrans_proj
 
-            # Image blending: restore original where user drew ON TOP OF inpainted area
-            # stroke_on_inpaint = 255 where stroke AND inpaint mask exist
-            stroke_on_inpaint = cv2.bitwise_and(stroke_mask, existing_mask)
+            # Same approach as rect-tool erase: replace stroke area with original
+            origin_slice = imgtrans.img_array[y:y+h, x:x+w]
+            inpainted_slice = imgtrans.inpainted_array[y:y+h, x:x+w]
+            existing_mask = imgtrans.mask_array[y:y+h, x:x+w]
 
-            # Unify channel count — img_array and inpainted_array may differ
-            n_ch = min(origin.shape[2], inpainted.shape[2])
-            inpainted_rgb = inpainted[..., :n_ch]
-            origin_rgb = origin[..., :n_ch]
+            # Unify channel count
+            n_ch = min(origin_slice.shape[2], inpainted_slice.shape[2])
+            stroke_bool = stroke_mask > 0
 
-            # Create blend mask: 1 where we need to restore origin, 0 to keep inpainted
-            blend_mask = np.zeros(inpainted_rgb.shape[:2], dtype=np.float32)
-            blend_mask[stroke_on_inpaint > 0] = 1
-            blend_mask = blend_mask[..., np.newaxis]  # (H, W) → (H, W, 1) for broadcasting
+            # Restore stroke pixels from original image (explicit channel slice)
+            erased = inpainted_slice.copy()
+            erased[stroke_bool, :n_ch] = origin_slice[stroke_bool, :n_ch]
 
-            # Restore: stroke+inpaint areas get origin, rest keeps inpainted
-            erased_img = (1 - blend_mask) * inpainted_rgb + blend_mask * origin_rgb
+            # Pad to match inpainted_array channel count if needed
+            if inpainted_slice.shape[2] != erased.shape[2]:
+                full = np.zeros_like(inpainted_slice)
+                full[..., :erased.shape[2]] = erased
+                if erased.shape[2] < inpainted_slice.shape[2]:
+                    full[..., erased.shape[2]:] = inpainted_slice[..., erased.shape[2]:]
+                erased = full
 
-            # Ensure erased_img channel count matches inpainted_array for undo command
-            if inpainted.shape[2] != erased_img.shape[2]:
-                full = np.zeros_like(inpainted)
-                full[..., :erased_img.shape[2]] = erased_img
-                if erased_img.shape[2] < inpainted.shape[2]:
-                    full[..., erased_img.shape[2]:] = inpainted[..., erased_img.shape[2]:]
-                erased_img = full
+            # Clear mask where stroke was
+            updated_mask = existing_mask.copy()
+            updated_mask[stroke_bool] = 0
 
-            # Mask update: keep existing mask on non-stroke areas, clear on stroke areas
-            # Invert stroke mask so stroke=0, non-stroke=255, then AND with existing mask
-            # Result: 0 on stroke (clear mask), existing values on non-stroke (keep)
-            updated_mask = cv2.bitwise_and(255 - stroke_mask, existing_mask)
-
-            self.canvas.push_undo_command(InpaintUndoCommand(self.canvas, erased_img, updated_mask, inpaint_rect))
+            self.canvas.push_undo_command(InpaintUndoCommand(self.canvas, erased, updated_mask, inpaint_rect))
             self.canvas.removeItem(stroke_item)
 
         elif self.currentTool == self.penTool:

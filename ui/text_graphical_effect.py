@@ -11,6 +11,7 @@ def apply_shadow_effect(img: Union[QPixmap, QImage, np.ndarray], color: QColor, 
     QPixmap, np.ndarray, np.ndarray]:
     if isinstance(color, QColor):
         color = [color.red(), color.green(), color.blue()]
+    color = color[:3]  # only use RGB channels, discard any alpha
 
     if not isinstance(img, np.ndarray):
         img = pixmap2ndarray(img, keep_alpha=True)

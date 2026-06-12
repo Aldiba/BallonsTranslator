@@ -226,16 +226,16 @@ class TextStyleLabel(Widget):
 
         draw_rect, draw_radius = QRectF(0, 0, d, d), radius
         if self.fontfmt.stroke_width > 0:
-            r, g, b = self.fontfmt.stroke_color()
-            color = QColor(r, g, b, 255)
+            r, g, b, *a = self.fontfmt.stroke_color()
+            color = QColor(r, g, b, a[0] if a else 255)
             painter.setBrush(color)
             painter.drawRoundedRect(draw_rect, draw_radius, draw_radius)
             draw_radius = draw_radius * 0.66
             offset = d / 2 - draw_radius
             draw_rect = QRectF(offset, offset, draw_radius*2, draw_radius*2)
 
-        r, g, b = self.fontfmt.frgb
-        color = QColor(r, g, b, 255)
+        r, g, b, *a = self.fontfmt.frgb
+        color = QColor(r, g, b, a[0] if a else 255)
         painter.setBrush(color)
         painter.drawRoundedRect(draw_rect, draw_radius, draw_radius)
         painter.end()

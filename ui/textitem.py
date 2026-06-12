@@ -627,7 +627,7 @@ class TextBlkItem(QGraphicsTextItem):
         font = fmt.font()
         color = fmt.foreground().color()
         fontformat = self.fontformat.deepcopy()
-        fontformat.frgb = [color.red(), color.green(), color.blue()]
+        fontformat.frgb = [color.red(), color.green(), color.blue(), color.alpha()]
         fontformat.font_weight = font.weight()
         fontformat.font_family = font.family()
         if self.isEditing():
@@ -930,7 +930,7 @@ class TextBlkItem(QGraphicsTextItem):
 
     def setStrokeColor(self, scolor, **kwargs):
         self.stroke_qcolor = scolor if isinstance(scolor, QColor) else QColor(*scolor)
-        self.fontformat.srgb = [self.stroke_qcolor.red(), self.stroke_qcolor.green(), self.stroke_qcolor.blue()]
+        self.fontformat.srgb = [self.stroke_qcolor.red(), self.stroke_qcolor.green(), self.stroke_qcolor.blue(), self.stroke_qcolor.alpha()]
         self.repaint_background()
         self.update()
 

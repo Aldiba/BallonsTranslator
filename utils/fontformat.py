@@ -132,6 +132,6 @@ class FontFormat(Config):
 
     def foreground_color(self):
         return [int(round(x)) for x in self.frgb]
-    
+
     def stroke_color(self):
         return [int(round(x)) for x in self.srgb]

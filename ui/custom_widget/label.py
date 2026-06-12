@@ -54,7 +54,7 @@ class ColorPickerLabel(QLabel):
         btn = event.button()
         if btn == Qt.MouseButton.LeftButton:
             self.changingColor.emit()
-            color = QColorDialog.getColor()
+            color = QColorDialog.getColor(initial=self.color, options=QColorDialog.ColorDialogOption.ShowAlphaChannel)
             is_valid = color.isValid()
             if is_valid:
                 self.setPickerColor(color)
@@ -78,7 +78,7 @@ class ColorPickerLabel(QLabel):
 
     def rgb(self) -> List:
         color = self.color
-        return (color.red(), color.green(), color.blue())
+        return (color.red(), color.green(), color.blue(), color.alpha())
 
     def rgba(self) -> List:
         color = self.color
