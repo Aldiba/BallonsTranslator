@@ -624,9 +624,9 @@ class FontFormatPanel(Widget):
         cp.colorChanged.connect(lambda _v, e=entry: self._on_stroke_row_changed())
         ws.valueChanged.connect(lambda _v, e=entry: self._on_stroke_row_changed())
         vis_btn.toggled.connect(lambda checked, e=entry: self._on_vis_toggled(e, checked))
-        up_btn.clicked.connect(lambda e=entry: self._move_stroke(e, -1))
-        dn_btn.clicked.connect(lambda e=entry: self._move_stroke(e, +1))
-        del_btn.clicked.connect(lambda e=entry: self._remove_stroke_row(e))
+        up_btn.clicked.connect(lambda _c, e=entry: self._move_stroke(e, -1))
+        dn_btn.clicked.connect(lambda _c, e=entry: self._move_stroke(e, +1))
+        del_btn.clicked.connect(lambda _c, e=entry: self._remove_stroke_row(e))
         self._on_stroke_row_changed()
 
     @staticmethod

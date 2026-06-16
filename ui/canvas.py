@@ -186,7 +186,22 @@ class Canvas(QGraphicsScene):
     painting_pen = QPen()
     painting_shape = 0
     erasing_pen = QPen()
-    image_edit_mode = ImageEditMode.NONE
+    _image_edit_mode = ImageEditMode.NONE
+
+    @property
+    def image_edit_mode(self):
+        return self._image_edit_mode
+
+    @image_edit_mode.setter
+    def image_edit_mode(self, mode: int):
+        old = self._image_edit_mode
+        self._image_edit_mode = mode
+        # Clean up clone stamp visuals when switching away from StampTool
+        if old == ImageEditMode.StampTool and mode != ImageEditMode.StampTool:
+            self._hideClonePreview()
+            self._hideCloneSourceIndicator()
+            self._clone_preview_pixmap = None
+            self.clone_source = None
 
     projstate_unsaved = False
     proj_savestate_changed = Signal(bool)

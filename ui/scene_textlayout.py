@@ -601,7 +601,7 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                             elif char == '～':
                                 yoff -= line_width * 0.07
                             elif char == '—':
-                                yoff += line_width * 0.04
+                                yoff += line_width * 0.01
                             elif char == '~':
                                 yoff -= line_width * 0.1
                         # ================================
