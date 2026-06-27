@@ -62,6 +62,7 @@ class LeftBar(Widget):
     configChecked = Signal()
     open_dir = Signal(str)
     open_json_proj = Signal(str)
+    open_in_new_tab = Signal(str)
     save_proj = Signal()
     save_config = Signal()
     def __init__(self, mainwindow, *args, **kwargs) -> None:
@@ -91,6 +92,11 @@ class LeftBar(Widget):
 
         actionOpenProj = QAction(self.tr("Open Project ... *.json"), self)
         actionOpenProj.triggered.connect(self.onOpenProj)
+
+        actionOpenFolderInNewTab = QAction(self.tr("Open Folder in New Tab ..."), self)
+        actionOpenFolderInNewTab.triggered.connect(self.onOpenFolderInNewTab)
+        actionOpenProjInNewTab = QAction(self.tr("Open Project in New Tab ... *.json"), self)
+        actionOpenProjInNewTab.triggered.connect(self.onOpenProjInNewTab)
 
         actionSaveProj = QAction(self.tr("Save Project"), self)
         self.save_proj = actionSaveProj.triggered
@@ -127,6 +133,9 @@ class LeftBar(Widget):
         
         openMenu = QMenu(self)
         openMenu.addActions([actionOpenFolder, actionOpenProj])
+        openMenu.addSeparator()
+        openMenu.addActions([actionOpenFolderInNewTab, actionOpenProjInNewTab])
+        openMenu.addSeparator()
         openMenu.addMenu(self.recentMenu)
         openMenu.addSeparator()
         openMenu.addActions([
@@ -260,6 +269,28 @@ class LeftBar(Widget):
         json_path = str(dialog.getOpenFileUrl(self.parent(), self.tr('Import *.docx'), filter="*.json")[0].toLocalFile())
         if osp.exists(json_path):
             self.open_json_proj.emit(json_path)
+
+    def onOpenFolderInNewTab(self) -> None:
+        d = None
+        if len(self.recent_proj_list) > 0:
+            for projp in self.recent_proj_list:
+                if not osp.isdir(projp):
+                    projp = osp.dirname(projp)
+                if osp.exists(projp):
+                    d = projp
+                    break
+
+        dialog = QFileDialog()
+        folder_path = str(dialog.getExistingDirectory(self, self.tr("Select Directory"), d))
+        if osp.exists(folder_path):
+            self.updateRecentProjList(folder_path)
+            self.open_in_new_tab.emit(folder_path)
+
+    def onOpenProjInNewTab(self):
+        dialog = QFileDialog()
+        json_path = str(dialog.getOpenFileUrl(self.parent(), self.tr('Import *.docx'), filter="*.json")[0].toLocalFile())
+        if osp.exists(json_path):
+            self.open_in_new_tab.emit(json_path)
 
     def stateCheckerChanged(self, checker_type: str):
         if checker_type == 'imgtrans':

@@ -108,6 +108,38 @@ def _get_tight_rect_values(char: str, ffamily: str, size: float, weight: int, it
     
     return[x, y, w, h]
 
+@lru_cache(maxsize=512)
+def get_eastern_punc_ratio(ffamily: str, size: float, weight: int, italic: bool) -> float:
+    """
+    根据字体度量动态计算竖排东方标点(、。，)的占用高度比例。
+    用标点本身的 tightBoundingRect 高度与参考汉字(木)的 tightBoundingRect 高度
+    之比来反映该字体中标点的真实物理比例，再映射到视觉舒适的区间。
+    """
+    fm = _font_metrics(ffamily, size, weight, italic)
+    
+    # 测量三种东方竖排标点的平均 tight rect 高度
+    heights = []
+    for c in '、。，':
+        heights.append(fm.tightBoundingRect(c).height())
+    avg_h = sum(heights) / len(heights)
+    
+    # 测量参考汉字的高度
+    ref_h = fm.tightBoundingRect('木').height()
+    if ref_h <= 0:
+        return 0.6  # fallback
+    
+    # 物理比例：标点高度 / 汉字高度
+    raw_ratio = avg_h / ref_h
+    
+    # 线性映射到视觉舒适区间 [0.4, 0.75]
+    # 物理比例 = 0.3 → visual ≈ 0.47（标点很小的字体，如明体）
+    # 物理比例 = 0.5 → visual ≈ 0.59（典型字体）
+    # 物理比例 = 0.7 → visual ≈ 0.71（标点较大的字体，如黑体）
+    visual_ratio = 0.35 + 0.6 * raw_ratio
+    visual_ratio = min(0.75, max(0.4, visual_ratio))
+    
+    return visual_ratio
+
 def punc_actual_rect(line: QTextLine, family: str, size: float, weight: int, italic: bool, stroke_width: float, h: int = None, w: int = None, space_shift = 0, char_text: str = None) -> List[float]:
     # 兼容旧接口
     target_char = char_text if char_text else " " 
@@ -958,7 +990,8 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                         tbr, br = cfmt.punc_rect(char)
                         tbr_h = tbr.height() + cfmt.font_metrics.descent()
                     if char in PUNSET_EASTERN_VERTICAL:
-                        tbr_h = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)[3]*3/5
+                        punc_ratio = get_eastern_punc_ratio(cfmt.family, cfmt.size, cfmt.weight, cfmt.font.italic())
+                        tbr_h = cfmt.punc_actual_rect(line, char, cache=True, space_shift=space_shift)[3] * punc_ratio * 1.7
 
                     tbr_h += let_sp_offset
             elif char_idx - num_lspaces < blk_text_len:

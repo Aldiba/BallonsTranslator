@@ -8,7 +8,7 @@ import time
 import cv2
 
 from tqdm import tqdm
-from qtpy.QtWidgets import QAction, QFileDialog, QMenu, QHBoxLayout, QVBoxLayout, QApplication, QStackedWidget, QSplitter, QListWidget, QShortcut, QListWidgetItem, QMessageBox, QTextEdit, QPlainTextEdit
+from qtpy.QtWidgets import QAction, QFileDialog, QMenu, QHBoxLayout, QVBoxLayout, QApplication, QStackedWidget, QSplitter, QListWidget, QShortcut, QListWidgetItem, QMessageBox, QTextEdit, QPlainTextEdit, QSizePolicy, QListView
 from qtpy.QtCore import Qt, QPoint, QSize, QEvent, Signal
 from qtpy.QtGui import QContextMenuEvent, QTextCursor, QGuiApplication, QIcon, QCloseEvent, QKeySequence, QKeyEvent, QPainter, QClipboard, QImage
 
@@ -38,6 +38,7 @@ from .drawing_commands import RunBlkTransCommand
 from .keywordsubwidget import KeywordSubWidget
 from . import shared_widget as SW
 from .custom_widget import MessageBox, FrameLessMessageBox, ImgtransProgressMessageBox, ProgressMessageBox
+from .project_manager import ProjectManager, ProjectProxy
 
 class PageListView(QListWidget):
 
@@ -60,7 +61,9 @@ class PageListView(QListWidget):
 mainwindow_cls = Widget if shared.HEADLESS else FramelessWindow
 class MainWindow(mainwindow_cls):
 
-    imgtrans_proj: ProjImgTrans = ProjImgTrans()
+    imgtrans_proj: ProjImgTrans = None   # set in __init__ via ProjectProxy
+    project_manager: ProjectManager = None
+    cross_project_clipboard: list = []    # TextBlock clipboard for cross-project copy/paste
     save_on_page_changed = True
     opening_dir = False
     page_changing = False
@@ -74,6 +77,15 @@ class MainWindow(mainwindow_cls):
     
     def __init__(self, app: QApplication, config: ProgramConfig, open_dir='', **exec_args) -> None:
         super().__init__()
+
+        # Initialize multi-project support
+        self.project_manager = mgr = ProjectManager()
+        # Create an empty placeholder project so the proxy always has a target
+        placeholder = ProjImgTrans()
+        mgr._projects['__placeholder__'] = placeholder
+        mgr._active_key = '__placeholder__'
+        self.imgtrans_proj = ProjectProxy(mgr)
+        self.cross_project_clipboard = []
 
         shared.create_errdialog_in_mainthread = self.create_errdialog.emit
         self.create_errdialog.connect(self.on_create_errdialog)
@@ -141,7 +153,8 @@ class MainWindow(mainwindow_cls):
         self.leftBar.configChecked.connect(self.setupConfigUI)
         self.leftBar.globalSearchChecker.clicked.connect(self.on_set_gsearch_widget)
         self.leftBar.open_dir.connect(self.OpenProj)
-        self.leftBar.open_json_proj.connect(self.openJsonProj)
+        self.leftBar.open_json_proj.connect(lambda p: self.OpenProj(p))
+        self.leftBar.open_in_new_tab.connect(lambda p: self.OpenProj(p, new_tab=True))
         self.leftBar.save_proj.connect(self.manual_save)
         self.leftBar.save_all_pages.connect(self.on_save_all_pages)
         self.leftBar.export_doc.connect(self.on_export_doc)
@@ -174,6 +187,21 @@ class MainWindow(mainwindow_cls):
         self.titleBar = TitleBar(self)
         self.titleBar.closebtn_clicked.connect(self.on_closebtn_clicked)
         self.titleBar.display_lang_changed.connect(self.on_display_lang_changed)
+
+        # Multi-project thumbnail list (left side, shows first page thumbnail)
+        self.projectThumbList = QListWidget(self)
+        self.projectThumbList.setViewMode(QListView.ViewMode.IconMode)
+        self.projectThumbList.setIconSize(QSize(40, 40))
+        self.projectThumbList.setFixedWidth(56)
+        self.projectThumbList.setMovement(QListView.Movement.Static)
+        self.projectThumbList.setSpacing(4)
+        self.projectThumbList.setWordWrap(True)
+        self.projectThumbList.setTextElideMode(Qt.TextElideMode.ElideRight)
+        self.projectThumbList.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.projectThumbList.customContextMenuRequested.connect(self.on_project_thumb_context_menu)
+        self.projectThumbList.currentRowChanged.connect(self.on_project_thumb_clicked)
+        self.projectThumbList.setVisible(False)  # hidden until first project opens
+
         self.bottomBar = BottomBar(self)
         self.bottomBar.textedit_checkchanged.connect(self.setTextEditMode)
         self.bottomBar.paintmode_checkchanged.connect(self.setPaintMode)
@@ -181,6 +209,7 @@ class MainWindow(mainwindow_cls):
 
         mainHLayout = QHBoxLayout()
         mainHLayout.addWidget(self.leftBar)
+        mainHLayout.addWidget(self.projectThumbList)
         mainHLayout.addWidget(self.centralStackWidget)
         mainHLayout.setContentsMargins(0, 0, 0, 0)
         mainHLayout.setSpacing(0)
@@ -452,14 +481,82 @@ class MainWindow(mainwindow_cls):
         switch_language(lang)
         self.retranslateUI()
 
-    def OpenProj(self, proj_path: str):
-        if osp.isdir(proj_path):
-            self.openDir(proj_path)
+    def OpenProj(self, proj_path: str, new_tab: bool = False):
+        """Open a project. If new_tab, open alongside existing projects."""
+        if new_tab or self.project_manager.count == 0:
+            self.openProjInNewTab(proj_path)
         else:
-            self.openJsonProj(proj_path)
-        
+            # Replace current project in the active tab
+            self._replace_and_open_project(proj_path)
+
         if pcfg.let_textstyle_indep_flag and not shared.HEADLESS:
             self.load_textstyle_from_proj_dir(from_proj=True)
+
+    def _replace_and_open_project(self, proj_path: str):
+        """Close current active project and open a new one in its tab."""
+        old_key = self.project_manager.active_key
+        has_old_thumb = False
+        old_row = -1
+
+        if old_key and old_key != '__placeholder__':
+            # Save and close the old project
+            self.conditional_save()
+            # Find the thumbnail row before closing
+            for i in range(self.projectThumbList.count()):
+                item = self.projectThumbList.item(i)
+                if item and item.data(Qt.ItemDataRole.UserRole) == old_key:
+                    old_row = i
+                    has_old_thumb = True
+                    break
+
+        # Close the old project (or placeholder)
+        self.project_manager.close(old_key) if old_key else None
+
+        # Open the new project (this loads and makes it active)
+        self.project_manager.open(proj_path)
+
+        # Update thumbnail list
+        if has_old_thumb:
+            self._update_project_thumb(old_row, proj_path)
+        else:
+            self._add_project_thumb(proj_path)
+
+        # Reload UI for the new project
+        self._reload_ui_for_active_project()
+
+    def openProjInNewTab(self, proj_path: str):
+        """Open a project in a new tab, keeping existing projects open."""
+        proj_key = self.project_manager._make_key(proj_path)
+
+        # Check if already open (using project_for_key for robust matching)
+        existing = self.project_manager.project_for_key(proj_path)
+        if existing is not None:
+            # Find the actual stored key
+            for key in self.project_manager._projects:
+                if self.project_manager._projects[key] is existing:
+                    proj_key = key
+                    break
+            # Just switch to it
+            if self.project_manager.active_key != proj_key:
+                self.conditional_save()
+                self.project_manager.switch_to(proj_key)
+                self._reload_ui_for_active_project()
+            # Highlight the correct thumbnail
+            for i in range(self.projectThumbList.count()):
+                item = self.projectThumbList.item(i)
+                if item and item.data(Qt.ItemDataRole.UserRole) == proj_key:
+                    self.projectThumbList.setCurrentRow(i)
+                    break
+            return
+
+        # Save current active before switching
+        if self.project_manager.count > 0 and self.project_manager.active is not None:
+            self.conditional_save()
+
+        # Open and make active
+        self.project_manager.open(proj_path)
+        self._add_project_thumb(proj_path)
+        self._reload_ui_for_active_project()
 
     def load_textstyle_from_proj_dir(self, from_proj=False):
         if from_proj:
@@ -483,7 +580,11 @@ class MainWindow(mainwindow_cls):
     def openDir(self, directory: str):
         try:
             self.opening_dir = True
-            self.imgtrans_proj.load(directory)
+            if self.project_manager.active is None:
+                self.project_manager.open(directory)
+                self._add_project_tab(directory)
+            else:
+                self.project_manager.active.load(directory)
             self.st_manager.clearSceneTextitems()
             self.titleBar.setTitleContent(osp.basename(directory))
             self.updatePageList()
@@ -501,11 +602,15 @@ class MainWindow(mainwindow_cls):
     def openJsonProj(self, json_path: str):
         try:
             self.opening_dir = True
-            self.imgtrans_proj.load_from_json(json_path)
+            if self.project_manager.active is None:
+                self.project_manager.open(json_path)
+                self._add_project_tab(json_path)
+            else:
+                self.project_manager.active.load_from_json(json_path)
             self.st_manager.clearSceneTextitems()
-            self.leftBar.updateRecentProjList(self.imgtrans_proj.proj_path)
+            self.leftBar.updateRecentProjList(self.project_manager.active.proj_path)
             self.updatePageList()
-            self.titleBar.setTitleContent(osp.basename(self.imgtrans_proj.proj_path))
+            self.titleBar.setTitleContent(osp.basename(self.project_manager.active.proj_path))
             self.opening_dir = False
         except Exception as e:
             self.opening_dir = False
@@ -539,8 +644,17 @@ class MainWindow(mainwindow_cls):
         save_config()
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        if not self.imgtrans_proj.is_empty:
-            self.conditional_save(keep_exist_as_backup=True)
+        # Save all open projects
+        for key in list(self.project_manager.keys()):
+            self.project_manager.switch_to(key)
+            proj = self.project_manager.active
+            if proj is not None and not proj.is_empty:
+                self.conditional_save(keep_exist_as_backup=True)
+        # Switch back to whatever was active
+        if self.project_manager.keys():
+            keys = list(self.project_manager.keys())
+            if len(keys) > 0:
+                self.project_manager.switch_to(keys[0])
         while True:
             if not self.imsave_thread.isRunning():
                 break
@@ -585,6 +699,174 @@ class MainWindow(mainwindow_cls):
                 save_proj = True
             
             self.saveCurrentPage(update_scene_text, save_proj, restore_interface=True, save_rst_only=save_rst_only, keep_exist_as_backup=keep_exist_as_backup)
+
+    # -------------- Multi-project thumbnail management --------------
+    def _get_project_thumbnail(self, proj: ProjImgTrans) -> QIcon:
+        """Get a thumbnail icon for the first page of a project.
+        NOTE: thumbnail loading disabled — returns empty icon for performance."""
+        # if proj is None or proj.is_empty:
+        #     return QIcon()
+        # first_imgname = next(iter(proj.pages), None)
+        # if first_imgname is None:
+        #     return QIcon()
+        # img_path = osp.join(proj.directory, first_imgname)
+        # if osp.exists(img_path):
+        #     return QIcon(img_path)
+        return QIcon()
+
+    def _add_project_thumb(self, proj_path: str):
+        """Add a thumbnail item for a newly opened project."""
+        proj = self.project_manager.active
+        key = self.project_manager.active_key
+        thumb_name = osp.basename(proj.directory) if proj and proj.directory else osp.basename(proj_path)
+        icon = self._get_project_thumbnail(proj)
+
+        item = QListWidgetItem(icon, thumb_name)
+        item.setData(Qt.ItemDataRole.UserRole, key)
+        item.setToolTip(key)
+        self.projectThumbList.addItem(item)
+        self.projectThumbList.setCurrentItem(item)
+        self.projectThumbList.setVisible(self.projectThumbList.count() > 1)
+
+    def _update_project_thumb(self, row: int, proj_path: str):
+        """Update an existing thumbnail item with new project data."""
+        proj = self.project_manager.active
+        proj_key = self.project_manager.active_key
+        thumb_name = osp.basename(proj.directory) if proj and proj.directory else osp.basename(proj_path)
+        icon = self._get_project_thumbnail(proj)
+
+        item = self.projectThumbList.item(row)
+        if item:
+            item.setIcon(icon)
+            item.setText(thumb_name)
+            item.setData(Qt.ItemDataRole.UserRole, proj_key)
+            item.setToolTip(proj_key)
+
+    def _reload_ui_for_active_project(self):
+        """Reload all UI components for the currently active project.
+        Similar to what happens on page switch, but at project level."""
+        proj = self.project_manager.active
+        if proj is None:
+            return
+        self.st_manager.clearSceneTextitems()
+        self.updatePageList()
+        self.canvas.clear_undostack(update_saved_step=True)
+        self.canvas.updateCanvas()
+        self.st_manager.updateSceneTextitems()
+        self.titleBar.setTitleContent(osp.basename(proj.directory) if proj.directory else '')
+        self.module_manager.handle_page_changed()
+        self.drawingPanel.handle_page_changed()
+
+        # Highlight correct thumbnail
+        active_key = self.project_manager.active_key
+        for i in range(self.projectThumbList.count()):
+            item = self.projectThumbList.item(i)
+            if item and item.data(Qt.ItemDataRole.UserRole) == active_key:
+                self.projectThumbList.setCurrentRow(i)
+                break
+
+        self.projectThumbList.setVisible(self.projectThumbList.count() > 1)
+
+    def on_project_thumb_clicked(self, row: int):
+        """User clicked a different project thumbnail."""
+        if row < 0:
+            return
+        item = self.projectThumbList.item(row)
+        if item is None:
+            return
+        key = item.data(Qt.ItemDataRole.UserRole)
+        if key is None or key == self.project_manager.active_key:
+            return
+
+        # Save current project state
+        if self.project_manager.active is not None:
+            self.conditional_save()
+
+        self.project_manager.switch_to(key)
+        self._reload_ui_for_active_project()
+
+    def on_project_thumb_close(self, row: int):
+        """Close the project at the given thumbnail row."""
+        if self.project_manager.count <= 1:
+            self._close_last_project()
+            return
+
+        item = self.projectThumbList.item(row)
+        if item is None:
+            return
+        key = item.data(Qt.ItemDataRole.UserRole)
+        if key is None:
+            return
+
+        was_active = (key == self.project_manager.active_key)
+        self.project_manager.close(key)
+        self.projectThumbList.takeItem(row)
+
+        if was_active and self.project_manager.active is not None:
+            self._reload_ui_for_active_project()
+
+        self.projectThumbList.setVisible(self.projectThumbList.count() > 1)
+
+    def _close_last_project(self):
+        """Close the last remaining project, returning to empty state."""
+        if self.project_manager.active is not None:
+            self.conditional_save(keep_exist_as_backup=True)
+        key = self.project_manager.active_key
+        if key:
+            self.project_manager.close(key)
+        self.projectThumbList.clear()
+        self.projectThumbList.setVisible(False)
+        # Re-add placeholder so proxy always has a target
+        placeholder = ProjImgTrans()
+        self.project_manager._projects['__placeholder__'] = placeholder
+        self.project_manager._active_key = '__placeholder__'
+        # Reload empty state
+        self.st_manager.clearSceneTextitems()
+        self.canvas.clear_undostack(update_saved_step=True)
+        self.canvas.updateCanvas()
+        self.updatePageList()
+        self.titleBar.setTitleContent('')
+
+    def on_project_thumb_context_menu(self, pos):
+        """Right-click context menu on the project thumbnail list."""
+        item = self.projectThumbList.itemAt(pos)
+        if item is None:
+            return
+        row = self.projectThumbList.row(item)
+
+        menu = QMenu(self)
+        close_action = menu.addAction(self.tr("Close"))
+        close_others_action = menu.addAction(self.tr("Close Others"))
+        menu.addSeparator()
+        reveal_action = menu.addAction(self.tr("Reveal in File Explorer"))
+
+        action = menu.exec_(self.projectThumbList.mapToGlobal(pos))
+
+        if action == close_action:
+            self.on_project_thumb_close(row)
+        elif action == close_others_action:
+            for i in range(self.projectThumbList.count() - 1, -1, -1):
+                if i != row:
+                    self.on_project_thumb_close(i)
+        elif action == reveal_action:
+            item = self.projectThumbList.item(row)
+            if item:
+                tab_key = item.data(Qt.ItemDataRole.UserRole)
+                proj = self.project_manager.project_for_key(tab_key)
+                if proj and proj.directory:
+                    self._reveal_in_explorer(proj.directory)
+
+    def _reveal_in_explorer(self, path: str):
+        """Open file explorer at the given path."""
+        import subprocess
+        if sys.platform == 'win32':
+            subprocess.Popen(['explorer', osp.normpath(path)])
+        elif sys.platform == 'darwin':
+            subprocess.Popen(['open', path])
+        else:
+            subprocess.Popen(['xdg-open', path])
+
+    # -------------- End multi-project thumbnail management --------------
 
     def pageListCurrentItemChanged(self):
         item = self.pageList.currentItem()
@@ -657,6 +939,12 @@ class MainWindow(mainwindow_cls):
 
         shortcutDelete = QShortcut(QKeySequence.StandardKey.Delete, self)
         shortcutDelete.activated.connect(self.shortcutDelete)
+
+        # Cross-project text block clipboard
+        shortcutCopyBlks = QShortcut(QKeySequence("Ctrl+Shift+C"), self)
+        shortcutCopyBlks.activated.connect(self.on_copy_textblocks)
+        shortcutPasteBlks = QShortcut(QKeySequence("Ctrl+Shift+V"), self)
+        shortcutPasteBlks.activated.connect(self.on_paste_textblocks)
 
         drawpanel_shortcuts = {'hand': 'H', 'rect': 'R', 'inpaint': 'J', 'pen': 'B'}
         for tool_name, shortcut_key in drawpanel_shortcuts.items():
@@ -1630,6 +1918,30 @@ class MainWindow(mainwindow_cls):
 
         self.canvas.push_undo_command(PasteSrcItemsCommand(src_widget_list, text_list))
     
+    def on_copy_textblocks(self):
+        """Copy selected TextBlock objects to cross-project clipboard."""
+        blk_items = self.canvas.selected_text_items()
+        if len(blk_items) == 0:
+            return
+        import copy
+        self.cross_project_clipboard = []
+        for blk_item in blk_items:
+            blk = blk_item.blk
+            self.cross_project_clipboard.append(copy.deepcopy(blk))
+        LOGGER.info(f'Copied {len(self.cross_project_clipboard)} text block(s) to cross-project clipboard')
+
+    def on_paste_textblocks(self):
+        """Paste TextBlock objects from cross-project clipboard into the current project."""
+        if not self.cross_project_clipboard:
+            return
+        import copy
+        for copied_blk in self.cross_project_clipboard:
+            new_blk = copy.deepcopy(copied_blk)
+            self.project_manager.active.current_block_list().append(new_blk)
+            self.st_manager.addTextBlock(new_blk)
+        LOGGER.info(f'Pasted {len(self.cross_project_clipboard)} text block(s) from cross-project clipboard')
+        self.canvas.updateCanvas()
+
     def run_batch(self, exec_dirs: Union[List, str], **kwargs):
         if not isinstance(exec_dirs, List):
             exec_dirs = exec_dirs.split(',')
