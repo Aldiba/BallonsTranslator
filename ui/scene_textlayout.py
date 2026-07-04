@@ -629,7 +629,7 @@ class VerticalTextDocumentLayout(SceneTextLayout):
                         if char in PUNSET_LEFTSHIFT:
                             yoff += line_width * 0.38
                             if char == '…' or char == '⋯':
-                                yoff += line_width * 0.02
+                                yoff -= line_width * 0.02
                             elif char == '～':
                                 yoff -= line_width * 0.07
                             elif char == '—':
