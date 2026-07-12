@@ -394,6 +394,9 @@ class Canvas(QGraphicsScene):
             self._set_scene_scale(1)
 
         self.clearSelection()
+        shape_visible = self.txtblkShapeControl.isVisible()
+        if shape_visible:
+            self.txtblkShapeControl.hide()
         if self.textEditMode() and self.txtblkShapeControl.blk_item is not None:
             blk_item = self.txtblkShapeControl.blk_item
             if blk_item.is_editting():
@@ -410,6 +413,8 @@ class Canvas(QGraphicsScene):
         self.render(painter, rect, rect)   #  produce blurred result if target/source rect not specified #320
         painter.end()
 
+        if shape_visible:
+            self.txtblkShapeControl.show()
         if tlayer_opacity_before != 1:
             self.textLayer.setOpacity(tlayer_opacity_before)
         if not tlayer_visible:

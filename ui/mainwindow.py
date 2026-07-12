@@ -340,10 +340,31 @@ class MainWindow(mainwindow_cls):
             self.bottomBar.ocr_selector.setVisible(checked)
         elif idx == 2:
             pcfg.module.enable_translate = checked
+            if checked:
+                self._ensure_translator_loaded()
             self.bottomBar.trans_selector.setVisible(checked)
         elif idx == 3:
             pcfg.module.enable_inpaint = checked
             self.bottomBar.inpaint_selector.setVisible(checked)
+
+    def _ensure_translator_loaded(self):
+        from modules.base import ensure_translator_modules_loaded, translator_modules_loaded
+        if not translator_modules_loaded():
+            ensure_translator_modules_loaded()
+            # Refresh UI with newly loaded translator modules
+            valid_translators = GET_VALID_TRANSLATORS()
+            current = self.bottomBar.trans_selector.selector.currentText()
+            self.bottomBar.trans_selector.selector.clear()
+            self.bottomBar.trans_selector.selector.addItems(valid_translators)
+            if current in valid_translators:
+                self.bottomBar.trans_selector.selector.setCurrentText(current)
+            # Re-populate config panel translator params
+            from modules.base import merge_config_module_params
+            from modules.translators import TRANSLATORS
+            translator_params = merge_config_module_params(
+                pcfg.module.translator_params, GET_VALID_TRANSLATORS(), TRANSLATORS.get
+            )
+            self.configPanel.trans_config_panel.addModulesParamWidgets(translator_params)
 
     def setupConfig(self):
 
@@ -1327,6 +1348,7 @@ class MainWindow(mainwindow_cls):
                 editing_textitem.startEdit()
         
     def to_trans_config(self):
+        self._ensure_translator_loaded()
         self.leftBar.configChecker.setChecked(True)
         self.configPanel.focusOnTranslator()
 

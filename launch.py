@@ -180,6 +180,7 @@ def main():
     if args.headless:
         config.module.load_model_on_demand = True
         config.module.empty_runcache = False
+        config.module.load_translator_on_startup = True  # headless mode always needs translator
 
     if sys.platform == 'win32':
         import ctypes
@@ -218,7 +219,12 @@ def main():
     # yield QWindowsContext: OleInitialize() failed on py3.10, 
     from modules.base import init_module_registries
     from modules.prepare_local_files import prepare_local_files_forall
-    init_module_registries()
+
+    # Load non-translator modules first (always needed)
+    if config.module.load_translator_on_startup:
+        init_module_registries()
+    else:
+        init_module_registries(['textdetector', 'ocr', 'inpainter'])
     prepare_local_files_forall()
 
     if not args.headless:

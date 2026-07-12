@@ -379,6 +379,9 @@ class ConfigPanel(Widget):
         self.empty_runcache_checker, msublock = checkbox_with_label(self.tr('Empty cache after RUN'), discription=self.tr('Empty cache after RUN to save memory.'))
         dlConfigPanel.vlayout.addWidget(msublock)
         self.empty_runcache_checker.stateChanged.connect(self.on_runcache_changed)
+        self.load_translator_startup_checker, msublock = checkbox_with_label(self.tr('Load translator modules on startup'), discription=self.tr('Import translator modules at startup. Disable to speed up launch if translation is not needed.'))
+        dlConfigPanel.vlayout.addWidget(msublock)
+        self.load_translator_startup_checker.stateChanged.connect(self.on_load_translator_startup_changed)
         self.unload_model_btn = QPushButton(parent=self)
         self.unload_model_btn.setFixedWidth(500)
         self.unload_model_btn.setText(self.tr('Unload All Models'))
@@ -516,6 +519,9 @@ class ConfigPanel(Widget):
     def on_runcache_changed(self):
         pcfg.module.empty_runcache = self.empty_runcache_checker.isChecked()
 
+    def on_load_translator_startup_changed(self):
+        pcfg.module.load_translator_on_startup = self.load_translator_startup_checker.isChecked()
+
     def on_keepline_clicked(self):
         pcfg.module.keep_exist_textlines = self.detect_config_panel.keep_existing_checker.isChecked()
 
@@ -647,6 +653,7 @@ class ConfigPanel(Widget):
         self.rst_imgquality_edit.setText(str(pcfg.imgsave_quality))
         self.load_model_checker.setChecked(pcfg.module.load_model_on_demand)
         self.empty_runcache_checker.setChecked(pcfg.module.empty_runcache)
+        self.load_translator_startup_checker.setChecked(pcfg.module.load_translator_on_startup)
         self.let_show_only_custom_fonts.setChecked(pcfg.let_show_only_custom_fonts_flag)
 
         self.blockSignals(False)

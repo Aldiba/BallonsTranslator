@@ -166,13 +166,17 @@ class TranslateThread(ModuleThread):
         self.translator: BaseTranslator = self.module
 
     def _set_translator(self, translator: str):
-        
+
         old_translator = self.translator
         source, target = cfg_module.translate_source, cfg_module.translate_target
         if self.translator is not None:
             if self.translator.name == translator:
                 return
-        
+
+        # Lazy-load translator modules if the requested translator is not registered
+        if translator not in TRANSLATORS.module_dict:
+            modules.ensure_translator_modules_loaded()
+
         try:
             params = cfg_module.translator_params[translator]
             translator_module: BaseTranslator = TRANSLATORS.module_dict[translator]
@@ -185,7 +189,12 @@ class TranslateThread(ModuleThread):
             cfg_module.translator = self.translator.name
         except Exception as e:
             if old_translator is None:
-                old_translator = TRANSLATORS.module_dict['google']('简体中文', 'English', raise_unsupported_lang=False)
+                fallback_cls = TRANSLATORS.module_dict.get('google') or TRANSLATORS.module_dict.get('None')
+                if fallback_cls:
+                    try:
+                        old_translator = fallback_cls('简体中文', 'English', raise_unsupported_lang=False)
+                    except Exception:
+                        old_translator = None
             self.translator = old_translator
             msg = self.tr('Failed to set translator ') + translator
             create_error_dialog(e, msg, 'FailedSetTranslator')

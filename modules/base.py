@@ -322,8 +322,24 @@ MODULE_SCRIPTS = {
     'inpainter': {'module_dir': 'modules/inpaint', 'module_pattern': r'inpaint_(.*?).py'},
     'ocr': {'module_dir': 'modules/ocr', 'module_pattern': r'ocr_(.*?).py'},
 }
-    
+
+_translator_modules_loaded = False
+
+
+def translator_modules_loaded():
+    return _translator_modules_loaded
+
+
+def ensure_translator_modules_loaded():
+    global _translator_modules_loaded
+    if not _translator_modules_loaded:
+        init_translator_registries()
+        _translator_modules_loaded = True
+        LOGGER.info('Translator modules loaded on demand')
+
+
 def init_module_registries(target_modules=None):
+    global _translator_modules_loaded
     def _load_module(module_dir: str, module_pattern: str):
         modules = os.listdir(module_dir)
         pattern = re.compile(module_pattern)
@@ -345,6 +361,8 @@ def init_module_registries(target_modules=None):
 
     for k in target_modules:
         _load_module(**MODULE_SCRIPTS[k])
+        if k == 'translator':
+            _translator_modules_loaded = True
 
 
 def init_textdetector_registries():
