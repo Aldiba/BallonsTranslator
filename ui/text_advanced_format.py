@@ -1,10 +1,12 @@
 from typing import Any, Callable
 
-from qtpy.QtWidgets import QSizePolicy, QVBoxLayout, QPushButton, QGroupBox, QLabel, QHBoxLayout
+from qtpy.QtWidgets import QSizePolicy, QVBoxLayout, QPushButton, QGroupBox, QLabel, QHBoxLayout, QSpinBox
 from qtpy.QtCore import Signal, Qt
+from qtpy.QtGui import QIcon
 
-from .custom_widget import SmallColorPickerLabel, SmallParamLabel, PanelArea, SmallSizeControlLabel, SmallSizeComboBox, SmallParamLabel, SmallSizeComboBox, SmallComboBox, TextCheckerLabel
+from .custom_widget import SmallColorPickerLabel, SmallParamLabel, PanelArea, SmallSizeControlLabel, SmallSizeComboBox, SmallParamLabel, SmallSizeComboBox, SmallComboBox, TextCheckerLabel, ParamSlider
 from utils.fontformat import FontFormat
+import random as _random
 
 
 class TextShadowGroup(QGroupBox):
@@ -134,6 +136,123 @@ class TextGradientGroup(QGroupBox):
         layout.addLayout(hlayout2)
 
 
+class TextTextureGroup(QGroupBox):
+    """Texture effect controls — master toggle + 4 vertical slider rows."""
+
+    def __init__(self, on_param_changed: Callable = None):
+        super().__init__()
+        self.setTitle(self.tr('Texture'))
+        self.on_param_changed = on_param_changed
+
+        # ── Master toggle ───────────────────────────────────────────────
+        self.master_checker = TextCheckerLabel(self.tr('Enable'))
+        self.master_checker.checkStateChanged.connect(
+            lambda checked: self.on_param_changed('texture_enabled', checked)
+        )
+
+        # ── Edge roughness ──────────────────────────────────────────────
+        self.edge_checker = TextCheckerLabel(self.tr('Rough Edge'))
+        self.edge_checker.checkStateChanged.connect(
+            lambda checked: self.on_param_changed('texture_edge_enabled', checked)
+        )
+
+        self.edge_strength_slider = ParamSlider(
+            'texture_edge_strength', min_val=0, max_val=100, step=1, value=50,
+        )
+        self.edge_strength_slider.paramwidget_edited.connect(self._on_float_param)
+        edge_strength_label = SmallParamLabel(
+            self.tr('Edge Strength'), alignment=Qt.AlignmentFlag.AlignLeft,
+        )
+        edge_str_row = QHBoxLayout()
+        edge_str_row.addWidget(edge_strength_label)
+        edge_str_row.addWidget(self.edge_strength_slider)
+        edge_str_row.addStretch(-1)
+
+        self.edge_hardness_slider = ParamSlider(
+            'texture_edge_hardness', min_val=0, max_val=100, step=1, value=50,
+        )
+        self.edge_hardness_slider.paramwidget_edited.connect(self._on_float_param)
+        edge_hard_label = SmallParamLabel(
+            self.tr('Edge Hardness'), alignment=Qt.AlignmentFlag.AlignLeft,
+        )
+        edge_hard_row = QHBoxLayout()
+        edge_hard_row.addWidget(edge_hard_label)
+        edge_hard_row.addWidget(self.edge_hardness_slider)
+        edge_hard_row.addStretch(-1)
+
+        # ── Internal grain ──────────────────────────────────────────────
+        self.grain_checker = TextCheckerLabel(self.tr('Grain'))
+        self.grain_checker.checkStateChanged.connect(
+            lambda checked: self.on_param_changed('texture_grain_enabled', checked)
+        )
+
+        self.grain_strength_slider = ParamSlider(
+            'texture_grain_strength', min_val=0, max_val=100, step=1, value=50,
+        )
+        self.grain_strength_slider.paramwidget_edited.connect(self._on_float_param)
+        grain_str_label = SmallParamLabel(
+            self.tr('Grain Strength'), alignment=Qt.AlignmentFlag.AlignLeft,
+        )
+        grain_str_row = QHBoxLayout()
+        grain_str_row.addWidget(grain_str_label)
+        grain_str_row.addWidget(self.grain_strength_slider)
+        grain_str_row.addStretch(-1)
+
+        self.grain_size_slider = ParamSlider(
+            'texture_grain_size', min_val=0, max_val=100, step=1, value=50,
+        )
+        self.grain_size_slider.paramwidget_edited.connect(self._on_float_param)
+        grain_size_label = SmallParamLabel(
+            self.tr('Grain Size'), alignment=Qt.AlignmentFlag.AlignLeft,
+        )
+        grain_size_row = QHBoxLayout()
+        grain_size_row.addWidget(grain_size_label)
+        grain_size_row.addWidget(self.grain_size_slider)
+        grain_size_row.addStretch(-1)
+
+        # ── Seed ─────────────────────────────────────────────────────────
+        self.seed_spin = QSpinBox()
+        self.seed_spin.setRange(0, 999999)
+        self.seed_spin.setValue(0)
+        self.seed_spin.setToolTip(self.tr('Noise seed, 0 = random each time'))
+        self.seed_spin.setMinimumWidth(72)
+        self.seed_spin.valueChanged.connect(self._on_seed_changed)
+
+        self.seed_random_btn = QPushButton('🎲')
+        self.seed_random_btn.setFixedSize(24, 24)
+        self.seed_random_btn.setToolTip(self.tr('Random seed'))
+        self.seed_random_btn.clicked.connect(self._on_random_seed)
+
+        seed_label = SmallParamLabel(
+            self.tr('Seed'), alignment=Qt.AlignmentFlag.AlignLeft,
+        )
+        seed_row = QHBoxLayout()
+        seed_row.addWidget(seed_label)
+        seed_row.addWidget(self.seed_spin)
+        seed_row.addWidget(self.seed_random_btn)
+        seed_row.addStretch(-1)
+
+        # ── Vertical layout ─────────────────────────────────────────────
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.master_checker)
+        layout.addWidget(self.edge_checker)
+        layout.addLayout(edge_str_row)
+        layout.addLayout(edge_hard_row)
+        layout.addWidget(self.grain_checker)
+        layout.addLayout(grain_str_row)
+        layout.addLayout(grain_size_row)
+        layout.addLayout(seed_row)
+
+    def _on_float_param(self, param_key: str, value_str: str):
+        self.on_param_changed(param_key, int(value_str) / 100.0)
+
+    def _on_seed_changed(self, value: int):
+        self.on_param_changed('texture_seed', value)
+
+    def _on_random_seed(self):
+        self.seed_spin.setValue(_random.randint(1, 999999))
+
+
 class TextAdvancedFormatPanel(PanelArea):
 
     param_changed = Signal(str, object)
@@ -177,6 +296,9 @@ class TextAdvancedFormatPanel(PanelArea):
         self.gradient_group = TextGradientGroup(self.on_format_changed)
         self.gradient_group.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
 
+        self.texture_group = TextTextureGroup(self.on_format_changed)
+        self.texture_group.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
+
         hlayout = QHBoxLayout()
         hlayout.addLayout(linespacing_type_layout)
         hlayout.addLayout(opacity_layout)
@@ -185,6 +307,7 @@ class TextAdvancedFormatPanel(PanelArea):
         vlayout.setAlignment(Qt.AlignmentFlag.AlignTop)
         vlayout.addWidget(self.shadow_group)
         vlayout.addWidget(self.gradient_group)
+        vlayout.addWidget(self.texture_group)
 
         self.setContentLayout(vlayout)
         self.vlayout = vlayout
@@ -212,3 +335,12 @@ class TextAdvancedFormatPanel(PanelArea):
         self.gradient_group.start_picker.setPickerColor(font_format.gradient_start_color)
         self.gradient_group.end_picker.setPickerColor(font_format.gradient_end_color)
         # self.tate_chu_yoko_checker.setChecked(font_format.font)
+
+        self.texture_group.master_checker.setCheckState(font_format.texture_enabled)
+        self.texture_group.edge_checker.setCheckState(font_format.texture_edge_enabled)
+        self.texture_group.edge_strength_slider.setValue(int(font_format.texture_edge_strength * 100))
+        self.texture_group.edge_hardness_slider.setValue(int(font_format.texture_edge_hardness * 100))
+        self.texture_group.grain_checker.setCheckState(font_format.texture_grain_enabled)
+        self.texture_group.grain_strength_slider.setValue(int(font_format.texture_grain_strength * 100))
+        self.texture_group.grain_size_slider.setValue(int(font_format.texture_grain_size * 100))
+        self.texture_group.seed_spin.setValue(font_format.texture_seed)

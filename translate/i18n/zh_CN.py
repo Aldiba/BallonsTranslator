@@ -35,6 +35,7 @@ TRANSLATIONS = {
         'Paste source text': '粘贴原文',
         'Reset Angle': '重置角度',
         'Squeeze': '挤压',
+        'Toggle Path Arc': '切换弧形路径',
         'inpaint': '修复',
         'translate': '翻译',
     },

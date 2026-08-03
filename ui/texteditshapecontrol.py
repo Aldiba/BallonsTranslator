@@ -43,6 +43,7 @@ class ControlBlockItem(QGraphicsRectItem):
     DRAG_NONE = 0
     DRAG_RESHAPE = 1
     DRAG_ROTATE = 2
+    DRAG_PATH = 3  # Alt+drag → path deformation
     CURSOR_IDX = -1
     def __init__(self, parent, idx: int):
         super().__init__(parent)
@@ -85,8 +86,16 @@ class ControlBlockItem(QGraphicsRectItem):
         return super().hoverLeaveEvent(event)
 
     def hoverMoveEvent(self, event: QGraphicsSceneHoverEvent) -> None:
+        # Alt + drag path deformation disabled.
+        # alt_held = bool(event.modifiers() & Qt.KeyboardModifier.AltModifier)
         angle = self.ctrl.rotation() + 45 * self.idx
         idx = self.get_angle_idx(angle)
+
+        # if alt_held and self.ctrl.blk_item is not None \
+        #         and not self.ctrl.blk_item.fontformat.vertical:
+        #     # Alt held → path deformation mode, override cursor
+        #     self.setCursor(Qt.CursorShape.SizeVerCursor)
+        #     self.drag_mode = self.DRAG_PATH
         if self.visible_rect.contains(event.pos()):
             self.setCursor(resizeCursorList[idx % 4])
         else:
@@ -104,6 +113,19 @@ class ControlBlockItem(QGraphicsRectItem):
         if event.button() == Qt.MouseButton.LeftButton and self.ctrl.blk_item is not None:
             blk_item = self.ctrl.blk_item
             blk_item.setSelected(True)
+
+            # Alt + drag path deformation disabled.
+            # alt_held = bool(event.modifiers() & Qt.KeyboardModifier.AltModifier)
+            # if alt_held and not blk_item.fontformat.vertical:
+            #     self.drag_mode = self.DRAG_PATH
+            #     self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
+            #     ff = blk_item.fontformat
+            #     pd = ff.path_data if ff.path_data else [0.0]
+            #     cur = pd[0] if pd else 0.0
+            #     if ff.path_type == 2:
+            #         cur = -cur
+            #     self._path_start_y = event.scenePos().y()
+            #     self._path_start_curvature = cur
             if self.visible_rect.contains(event.pos()):
                 self.ctrl.reshaping = True
                 self.drag_mode = self.DRAG_RESHAPE
@@ -120,7 +142,7 @@ class ControlBlockItem(QGraphicsRectItem):
                 rotate_vec = event.scenePos() - self.ctrl.sceneBoundingRect().center()
                 self.updateAngleLabelPos()
                 rotation = np.rad2deg(math.atan2(rotate_vec.y(), rotate_vec.x()))
-                self.rotate_start = - rotation + self.ctrl.rotation() 
+                self.rotate_start = - rotation + self.ctrl.rotation()
         event.accept()
 
     def updateAngleLabelPos(self):
@@ -141,6 +163,18 @@ class ControlBlockItem(QGraphicsRectItem):
         blk_item = self.ctrl.blk_item
         if blk_item is None:
             return
+        # Alt + drag path deformation disabled.
+        # if self.drag_mode == self.DRAG_PATH:
+        #     dy = self._path_start_y - event.scenePos().y()  # up = positive curvature
+        #     sensitivity = 0.005  # curvature per pixel
+        #     cur = self._path_start_curvature + dy * sensitivity
+        #     cur = max(-1.0, min(1.0, cur))
+        #     if abs(cur) < 0.005:
+        #         blk_item.setPathMode(0, [0.0])  # turn off
+        #     elif cur > 0:
+        #         blk_item.setPathMode(1, [cur])   # arc above
+        #     else:
+        #         blk_item.setPathMode(2, [-cur])  # arc below
         if self.drag_mode == self.DRAG_RESHAPE:    
             block_group = self.ctrl.ctrlblock_group
             crect = self.ctrl.rect()
@@ -210,8 +244,12 @@ class ControlBlockItem(QGraphicsRectItem):
             self.ctrl.reshaping = False
             if self.drag_mode == self.DRAG_RESHAPE:
                 self.ctrl.blk_item.endReshape()
-            if self.drag_mode == self.DRAG_ROTATE:
+            elif self.drag_mode == self.DRAG_ROTATE:
                 self.ctrl.blk_item.rotated.emit(self.ctrl.rotation())
+            # Alt + drag path deformation disabled.
+            # elif self.drag_mode == self.DRAG_PATH:
+            #     self.ctrl.blk_item.push_undo_stack.emit(1, False)
+            #     self.ctrl._updateCurvatureHandle()
             self.drag_mode = self.DRAG_NONE
             
             self.ctrl.previewPixmap.setVisible(False)
@@ -220,8 +258,68 @@ class ControlBlockItem(QGraphicsRectItem):
             self.ctrl.updateBoundingRect()
             return super().mouseReleaseEvent(event)
 
+class CurvatureHandle(QGraphicsRectItem):
+    """Small draggable handle at the center of path-enabled text blocks.
+
+    Dragging vertically adjusts the arc curvature (path_data[0]).
+    """
+    HANDLE_SIZE = 12
+    CURVATURE_STEP = 0.01  # per pixel dragged
+
+    def __init__(self, parent: 'TextBlkShapeControl'):
+        super().__init__(parent)
+        self.ctrl = parent
+        self._dragging = False
+        self._drag_start_y = 0.0
+        self._start_curvature = 0.3
+        self.setRect(0, 0, self.HANDLE_SIZE, self.HANDLE_SIZE)
+        self.setAcceptHoverEvents(True)
+        self.setCursor(Qt.CursorShape.SizeVerCursor)
+        self.setZValue(10)
+        self.hide()
+
+    def paint(self, painter: QPainter, option: QStyleOptionGraphicsItem, widget=None):
+        painter.setPen(QPen(QColor(255, 140, 0), 2))
+        painter.setBrush(QColor(255, 140, 0, 180))
+        r = self.rect()
+        painter.drawEllipse(r.center(), r.width() / 2 - 1, r.height() / 2 - 1)
+
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._dragging = True
+            self._drag_start_y = event.scenePos().y()
+            blk_item = self.ctrl.blk_item
+            if blk_item is not None and blk_item.fontformat is not None:
+                pd = blk_item.fontformat.path_data
+                self._start_curvature = pd[0] if pd else 0.3
+        event.accept()
+
+    def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent):
+        if not self._dragging:
+            return
+        dy = self._drag_start_y - event.scenePos().y()  # up = positive curvature
+        new_curvature = self._start_curvature + dy * self.CURVATURE_STEP
+        new_curvature = max(0.0, min(1.0, new_curvature))
+        blk_item = self.ctrl.blk_item
+        if blk_item is not None:
+            blk_item.setPathMode(blk_item.fontformat.path_type, [new_curvature])
+        event.accept()
+
+    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent):
+        if self._dragging:
+            self._dragging = False
+            blk_item = self.ctrl.blk_item
+            if blk_item is not None:
+                blk_item.push_undo_stack.emit(1, False)
+        event.accept()
+
+    def hoverEnterEvent(self, event: QGraphicsSceneHoverEvent):
+        self.setCursor(Qt.CursorShape.SizeVerCursor)
+        return super().hoverEnterEvent(event)
+
+
 class TextBlkShapeControl(QGraphicsRectItem):
-    blk_item : TextBlkItem = None 
+    blk_item : TextBlkItem = None
     ctrl_block: ControlBlockItem = None
     reshaping: bool = False
     
@@ -231,7 +329,7 @@ class TextBlkShapeControl(QGraphicsRectItem):
         self.ctrlblock_group = [
             ControlBlockItem(self, idx) for idx in range(8)
         ]
-        
+
         self.previewPixmap = QGraphicsPixmapItem(self)
         self.previewPixmap.setVisible(False)
         pen = QPen(QColor(69, 71, 87), 2, Qt.PenStyle.SolidLine)
@@ -245,6 +343,8 @@ class TextBlkShapeControl(QGraphicsRectItem):
         self.angleLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.angleLabel.setHidden(True)
 
+        self.curvature_handle = CurvatureHandle(self)
+
         self.current_scale = 1.
         self.need_rescale = False
         self.setCursor(Qt.CursorShape.SizeAllCursor)
@@ -257,15 +357,33 @@ class TextBlkShapeControl(QGraphicsRectItem):
             if self.blk_item.isEditing():
                 self.blk_item.endEdit()
             self.blk_item.update()
-            
+
         self.blk_item = blk_item
         if blk_item is None:
             self.hide()
+            self.curvature_handle.hide()
             return
         blk_item.under_ctrl = True
         blk_item.update()
         self.updateBoundingRect()
         self.show()
+        self._updateCurvatureHandle()
+
+    def _updateCurvatureHandle(self):
+        """Show/hide curvature handle based on blk_item's path_type."""
+        if self.blk_item is None:
+            self.curvature_handle.hide()
+            return
+        ff = self.blk_item.fontformat
+        if ff is not None and ff.path_type > 0:
+            # Position at the vertical center of the control
+            br = self.rect()
+            cx = br.center().x() - CurvatureHandle.HANDLE_SIZE / 2.0
+            cy = br.center().y() - CurvatureHandle.HANDLE_SIZE / 2.0
+            self.curvature_handle.setPos(cx, cy)
+            self.curvature_handle.show()
+        else:
+            self.curvature_handle.hide()
 
     def updateBoundingRect(self):
         if self.blk_item is None:
@@ -343,9 +461,11 @@ class TextBlkShapeControl(QGraphicsRectItem):
         self.setCursor(Qt.CursorShape.IBeamCursor)
         for ctrlb in self.ctrlblock_group:
             ctrlb.hide()
+        self.curvature_handle.hide()
 
     def endEditing(self):
         self.setCursor(Qt.CursorShape.SizeAllCursor)
         if self.isVisible():
             for ctrlb in self.ctrlblock_group:
                 ctrlb.show()
+            self._updateCurvatureHandle()

@@ -11,9 +11,10 @@ from qtpy.QtGui import (QGradient, QKeyEvent, QFont, QTextCursor, QPixmap, QPain
 from utils.textblock import TextBlock, FontFormat, TextAlignment, LineSpacingType
 from utils.imgproc_utils import xywh2xyxypoly, rotate_polygons
 from utils.fontformat import FontFormat, px2pt, pt2px
-from .misc import td_pattern, table_pattern
+from .misc import td_pattern, table_pattern, ndarray2pixmap
 from .scene_textlayout import VerticalTextDocumentLayout, HorizontalTextDocumentLayout, SceneTextLayout
-from .text_graphical_effect import apply_shadow_effect
+from .path_textlayout import PathTextDocumentLayout
+from .text_graphical_effect import apply_shadow_effect, apply_texture_effect
 
 TEXTRECT_SHOW_COLOR = QColor(30, 147, 229, 170)
 TEXTRECT_SELECTED_COLOR = QColor(248, 64, 147, 170)
@@ -52,6 +53,7 @@ class TextBlkItem(QGraphicsTextItem):
         self.idx = idx
         
         self.background_pixmap: QPixmap = None
+        self.grain_overlay: QPixmap = None
         self.stroke_qcolor = QColor(0, 0, 0)
         self.oldPos = QPointF()
         self.oldRect = QRectF()
@@ -67,7 +69,7 @@ class TextBlkItem(QGraphicsTextItem):
         self.block_all_input = False
         self.block_change_signal = False
 
-        self.layout: Union[VerticalTextDocumentLayout, HorizontalTextDocumentLayout] = None
+        self.layout: Union[VerticalTextDocumentLayout, HorizontalTextDocumentLayout, PathTextDocumentLayout] = None
         self.document().setDocumentMargin(0)
         self.initTextBlock(blk, set_format=set_format)
         self.setBoundingRegionGranularity(0)
@@ -162,10 +164,16 @@ class TextBlkItem(QGraphicsTextItem):
                     it += 1
                 block = block.next()
 
-            layout = VerticalTextDocumentLayout(doc, self.fontformat) if self.fontformat.vertical \
-                else HorizontalTextDocumentLayout(doc, self.fontformat)
-            layout._draw_offset = self.layout._draw_offset
-            layout._is_painting_stroke = True
+            if self.fontformat.vertical:
+                layout = VerticalTextDocumentLayout(doc, self.fontformat)
+                layout._draw_offset = self.layout._draw_offset
+                layout._is_painting_stroke = True
+            elif self._needs_path_layout():
+                layout = PathTextDocumentLayout(doc, self.fontformat)
+            else:
+                layout = HorizontalTextDocumentLayout(doc, self.fontformat)
+                layout._draw_offset = self.layout._draw_offset
+                layout._is_painting_stroke = True
             layout.setMaxSize(self.layout.max_width, self.layout.max_height, False)
             doc.setDocumentLayout(layout)
             layout.relayout_on_changed = False
@@ -180,24 +188,53 @@ class TextBlkItem(QGraphicsTextItem):
 
         paint_stroke = self.fontformat.has_stroke
         paint_shadow = self.fontformat.shadow_radius > 0 and self.fontformat.shadow_strength > 0
-        if not paint_shadow and not paint_stroke or empty:
+        paint_texture = self.fontformat.has_texture
+        if not paint_shadow and not paint_stroke and not paint_texture or empty:
             self.background_pixmap = None
+            self.grain_overlay = None
             return
-        
+
         self.repainting = True
         font_size = self.layout.max_font_size(to_px=True)
         target_map = QPixmap(self.boundingRect().size().toSize())
         target_map.fill(Qt.GlobalColor.transparent)
         painter = QPainter(target_map)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
-        
+
         if paint_stroke:
             self.paint_stroke(painter)
         else:
             self.document().drawContents(painter)
 
+        painter.end()
+
+        # texture effect — edge roughness applied to background_pixmap,
+        # grain returned as separate overlay to draw on top of text
+        if paint_texture:
+            seed = self.fontformat.texture_seed
+            if seed == 0:
+                import random
+                seed = random.randint(1, 999999)
+                self.fontformat.texture_seed = seed
+            textured, grain_array = apply_texture_effect(
+                target_map,
+                edge_enabled=self.fontformat.texture_edge_enabled,
+                edge_strength=self.fontformat.texture_edge_strength,
+                edge_hardness=self.fontformat.texture_edge_hardness,
+                grain_enabled=self.fontformat.texture_grain_enabled,
+                grain_strength=self.fontformat.texture_grain_strength,
+                grain_size=self.fontformat.texture_grain_size,
+                grain_seed=seed,
+            )
+            target_map = ndarray2pixmap(textured)
+            if grain_array is not None:
+                self.grain_overlay = ndarray2pixmap(grain_array)
+            else:
+                self.grain_overlay = None
+
         # shadow
         if paint_shadow:
+            painter = QPainter(target_map)
             r = int(round(self.fontformat.shadow_radius * font_size))
             xoffset, yoffset = int(self.fontformat.shadow_offset[0] * font_size), int(self.fontformat.shadow_offset[1] * font_size)
             shadow_map, img_array = apply_shadow_effect(target_map, self.fontformat.shadow_color, self.fontformat.shadow_strength, r)
@@ -205,8 +242,8 @@ class TextBlkItem(QGraphicsTextItem):
             painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_DestinationOver)
             painter.drawPixmap(xoffset, yoffset, shadow_map)
             painter.setCompositionMode(cm)
+            painter.end()
 
-        painter.end()
         self.background_pixmap = target_map
         self.repainting = False
         
@@ -369,7 +406,10 @@ class TextBlkItem(QGraphicsTextItem):
         valid_layout = True
         doc = self.document()
         if self.layout is not None:
-            if isinstance(self.layout, VerticalTextDocumentLayout) == vertical:
+            cur_is_vert = isinstance(self.layout, VerticalTextDocumentLayout)
+            cur_is_path = isinstance(self.layout, PathTextDocumentLayout)
+            target_is_path = self._needs_path_layout()
+            if cur_is_vert == vertical and cur_is_path == target_is_path:
                 return
             self.layout.size_enlarged.disconnect(self.on_document_enlarged)
             self.layout.documentSizeChanged.disconnect(self.docSizeChanged)
@@ -380,24 +420,56 @@ class TextBlkItem(QGraphicsTextItem):
 
         if valid_layout:
             rect = self.rect() if self.layout is not None else None
-        
+
         self.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
         doc.documentLayout().blockSignals(True)
         if vertical:
             layout = VerticalTextDocumentLayout(doc, self.fontformat)
+        elif self._needs_path_layout():
+            layout = PathTextDocumentLayout(doc, self.fontformat)
         else:
             layout = HorizontalTextDocumentLayout(doc, self.fontformat)
-        
+
         self.layout = layout
         doc.setDocumentLayout(layout)
         layout.size_enlarged.connect(self.on_document_enlarged)
         layout.documentSizeChanged.connect(self.docSizeChanged)
-        
+
         if valid_layout:
             layout.setMaxSize(rect.width(), rect.height())
             self.setCenterTransform()
             self.repaint_background()
         self.doc_size_changed.emit(self.idx)
+        self.update()  # force repaint after layout switch
+
+    def _needs_path_layout(self) -> bool:
+        return (self.fontformat is not None
+                and self.fontformat.path_type > 0
+                and not self.fontformat.vertical)
+
+    def setPathMode(self, path_type: int, path_data: List[float] = None):
+        """Set path deformation type and parameters, switching layout if needed."""
+        if self.fontformat is None:
+            return
+        old_type = self.fontformat.path_type
+        self.fontformat.path_type = path_type
+        if path_data is not None:
+            self.fontformat.path_data = path_data
+        elif not self.fontformat.path_data:
+            self.fontformat.path_data = [0.3]
+
+        needs_layout_switch = ((old_type > 0) != (path_type > 0)
+                               or not isinstance(self.layout, PathTextDocumentLayout))
+        if needs_layout_switch:
+            if not self.fontformat.vertical:
+                self.setVertical(False)
+        elif path_type > 0 and isinstance(self.layout, PathTextDocumentLayout):
+            # Same path mode, only parameters changed — lightweight rebuild
+            self.layout.fontformat = self.fontformat
+            self.layout.reLayout()
+            self.setCenterTransform()
+            self.repaint_background()
+            self.update()
 
     def setVerticalRtlMode(self, mode: int, repaint_background: bool = True):
         self.is_formatting = True
@@ -481,7 +553,7 @@ class TextBlkItem(QGraphicsTextItem):
         # subpixel antialiasing is enabled for super().paint upon drawing on some non-transparent background https://github.com/dmMaze/BallonsTranslator/issues/919
         # which can be avoided by calling super().paint first, but it results in disappeared background in editting mode
         # so the checking logic lies here
-        
+
         if self.is_editting():
             self._draw_accessories(painter)
 
@@ -492,6 +564,14 @@ class TextBlkItem(QGraphicsTextItem):
             painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_DestinationOver)
             self._draw_accessories(painter)
             painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
+
+            # grain overlay: draw over text with DestinationIn to punch
+            # random thin spots into the text (crayon missing-pigment look)
+            if self.grain_overlay is not None:
+                br = self.boundingRect()
+                painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_DestinationIn)
+                painter.drawPixmap(br.toRect(), self.grain_overlay)
+                painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_SourceOver)
 
 
     def _draw_accessories(self, painter: QPainter):
@@ -1065,6 +1145,19 @@ class TextBlkItem(QGraphicsTextItem):
         self.fontformat.shadow_offset = fmt.shadow_offset
         if self.fontformat.shadow_radius > 0:
             self.setPadding(self.layout.max_font_size(to_px=True))
+        if repaint:
+            self.repaint_background()
+
+    def setTexture(self, fmt: FontFormat, repaint=True):
+        """设置纹理效果（总开关 / 边缘毛糙 / 内部噪点）"""
+        self.fontformat.texture_enabled = fmt.texture_enabled
+        self.fontformat.texture_edge_enabled = fmt.texture_edge_enabled
+        self.fontformat.texture_edge_strength = fmt.texture_edge_strength
+        self.fontformat.texture_edge_hardness = fmt.texture_edge_hardness
+        self.fontformat.texture_grain_enabled = fmt.texture_grain_enabled
+        self.fontformat.texture_grain_strength = fmt.texture_grain_strength
+        self.fontformat.texture_grain_size = fmt.texture_grain_size
+        self.fontformat.texture_seed = fmt.texture_seed
         if repaint:
             self.repaint_background()
 

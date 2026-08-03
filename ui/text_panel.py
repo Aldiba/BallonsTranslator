@@ -615,10 +615,10 @@ class FontFormatPanel(Widget):
         row_layout.addWidget(del_btn)
         row_layout.addStretch()
 
-        idx = len(self.stroke_rows)
+        idx = 0
         self.strokeRowsLayout.insertWidget(idx, row_widget)
         entry = (cp, ws, vis_btn, up_btn, dn_btn, del_btn, row_widget)
-        self.stroke_rows.append(entry)
+        self.stroke_rows.insert(0, entry)
 
         cp.colorChanged.connect(lambda _v, e=entry: self._on_stroke_row_changed())
         ws.valueChanged.connect(lambda _v, e=entry: self._on_stroke_row_changed())
@@ -682,7 +682,7 @@ class FontFormatPanel(Widget):
         for entry in list(self.stroke_rows):
             self._remove_stroke_row(entry)
         if strokes:
-            for s in strokes:
+            for s in reversed(strokes):
                 self._add_stroke_row(
                     width=s.get("width", 0),
                     color=s.get("color", [0, 0, 0, 255]),

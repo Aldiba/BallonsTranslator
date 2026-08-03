@@ -174,6 +174,7 @@ class Canvas(QGraphicsScene):
     layout_textblks = Signal()
     reset_angle = Signal()
     squeeze_blk = Signal()
+    toggle_path_arc = Signal()  # cycle path mode: 0→1→2→0
 
     run_blktrans = Signal(int)
 
@@ -202,6 +203,7 @@ class Canvas(QGraphicsScene):
             self._hideCloneSourceIndicator()
             self._clone_preview_pixmap = None
             self.clone_source = None
+            self.clone_anchor_offset = None
 
     projstate_unsaved = False
     proj_savestate_changed = Signal(bool)
@@ -303,6 +305,7 @@ class Canvas(QGraphicsScene):
         self.clone_preview_item: QGraphicsPixmapItem = None
         self._clone_preview_pixmap: QPixmap = None
         self._clone_last_src_scene: QPointF = None
+        self.clone_anchor_offset: QPointF = None  # persistent offset from cursor to source (image-local)
 
         self.editor_index = 0 # 0: drawing 1: text editor
         self.mid_btn_pressed = False
@@ -479,17 +482,19 @@ class Canvas(QGraphicsScene):
     def scaleImage(self, factor: float):
         if not self.gv.isVisible() or not self.imgtrans_proj.img_valid:
             return
-        s_f = self.scale_factor * factor
+        old_sf = self.scale_factor
+        s_f = old_sf * factor
         s_f = np.clip(s_f, CANVAS_SCALE_MIN, CANVAS_SCALE_MAX)
 
         scale_changed = self.scale_factor != s_f
+        actual_factor = s_f / max(old_sf, 0.001)
         self.scale_factor = s_f
         self.baseLayer.setScale(self.scale_factor)
         self.txtblkShapeControl.updateScale(self.scale_factor)
 
         if scale_changed:
-            self.adjustScrollBar(self.gv.horizontalScrollBar(), factor)
-            self.adjustScrollBar(self.gv.verticalScrollBar(), factor)
+            self.adjustScrollBar(self.gv.horizontalScrollBar(), actual_factor)
+            self.adjustScrollBar(self.gv.verticalScrollBar(), actual_factor)
             self.scalefactor_changed.emit()
         # 动态边距：缩放比例越大，边距越大，允许视角移动到边界外
         margin = int(CANVAS_SCENE_MARGIN * self.scale_factor)
@@ -727,8 +732,15 @@ class Canvas(QGraphicsScene):
         
         elif (self.image_edit_mode == ImageEditMode.StampTool
               and self.clone_source is not None
-              and self.clone_stamp_item is None):
-            # Show clone source preview at cursor position
+              and self.clone_stamp_item is None
+              and not (event.buttons() & Qt.MouseButton.LeftButton)):
+            # Maintain persistent offset between cursor and clone source
+            if self.clone_anchor_offset is not None:
+                cursor_local = self.inpaintLayer.mapFromScene(event.scenePos())
+                source_local = cursor_local + self.clone_anchor_offset
+                self.clone_source = self.inpaintLayer.mapToScene(source_local)
+            self._showCloneSourceIndicator(self.clone_source)
+            self._buildClonePreviewPixmap()
             self._updateClonePreview(event.scenePos())
 
         elif self.scale_tool_mode:
@@ -790,6 +802,7 @@ class Canvas(QGraphicsScene):
     def setCloneSource(self, pos: QPointF):
         """Set the clone source point (in scene coordinates)."""
         self.clone_source = pos
+        self.clone_anchor_offset = None  # fixed anchor, offset established on first stroke
         self._showCloneSourceIndicator(pos)
         self._buildClonePreviewPixmap()
 
@@ -998,6 +1011,12 @@ class Canvas(QGraphicsScene):
                 self.finish_painting.emit(self.stroke_img_item)
             elif self.clone_stamp_item is not None:
                 self.finishCloneStampStroke()
+                # Compute persistent offset so clone source tracks cursor
+                # with the same relative offset on subsequent mouse moves
+                if self.clone_source is not None:
+                    source_local = self.inpaintLayer.mapFromScene(self.clone_source)
+                    cursor_local = self.inpaintLayer.mapFromScene(event.scenePos())
+                    self.clone_anchor_offset = source_local - cursor_local
             elif self.scale_tool_mode:
                 self.end_scale_tool.emit()
         return super().mouseReleaseEvent(event)
@@ -1009,6 +1028,7 @@ class Canvas(QGraphicsScene):
         self.clone_source = None
         self._clone_preview_pixmap = None
         self.clone_stamp_item = None
+        self.clone_anchor_offset = None
         self._hideCloneSourceIndicator()
         self._hideClonePreview()
         self.txtblkShapeControl.setBlkItem(None)
@@ -1099,6 +1119,7 @@ class Canvas(QGraphicsScene):
             layout_act = menu.addAction(self.tr("Auto layout"))
             angle_act = menu.addAction(self.tr("Reset Angle"))
             squeeze_act = menu.addAction(self.tr("Squeeze"))
+            path_arc_act = menu.addAction(self.tr("Toggle Path Arc"))
             menu.addSeparator()
             translate_act = menu.addAction(self.tr("translate"))
             ocr_act = menu.addAction(self.tr("OCR"))
@@ -1128,6 +1149,8 @@ class Canvas(QGraphicsScene):
                 self.reset_angle.emit()
             elif rst == squeeze_act:
                 self.squeeze_blk.emit()
+            elif rst == path_arc_act:
+                self.toggle_path_arc.emit()
             elif rst == translate_act:
                 self.run_blktrans.emit(-1)
             elif rst == ocr_act:
@@ -1177,6 +1200,7 @@ class Canvas(QGraphicsScene):
         self.editing_textblkitem = None
         self.gv.ctrl_pressed = False
         self.clone_source = None
+        self.clone_anchor_offset = None
         self._clone_preview_pixmap = None
         self._hideCloneSourceIndicator()
         self._hideClonePreview()

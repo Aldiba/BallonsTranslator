@@ -797,14 +797,23 @@ class DrawingPanel(Widget):
 
                 # Get existing pixels in the rect region
                 existing = imgtrans.inpainted_array[y:y+h, x:x+w]
-                n_channels = existing.shape[2]
+                has_alpha = existing.shape[2] == 4
 
-                # Create result: start with existing, only overwrite where cloned
-                result = existing.copy()
-                alpha_mask = img_array[..., 3] > 0  # True where clone brush painted
-                # Only replace RGB channels — preserve existing alpha to avoid
-                # semi-transparent edge artifacts from anti-aliasing
-                result[alpha_mask, :3] = img_array[alpha_mask, :3]
+                # Proper alpha compositing: blend clone pixels over existing
+                # using clone's alpha channel for smooth anti-aliased edges.
+                # This avoids black-dot artifacts caused by premultiplied→straight
+                # precision loss at very low alpha values (alpha=1~5).
+                clone_alpha = img_array[..., 3].astype(np.float32) / 255.0
+                alpha_3d = clone_alpha[:, :, np.newaxis]
+
+                result_rgb = (img_array[..., :3].astype(np.float32) * alpha_3d
+                              + existing[..., :3].astype(np.float32) * (1 - alpha_3d))
+                result_rgb = np.clip(result_rgb, 0, 255).astype(np.uint8)
+
+                if has_alpha:
+                    result = np.dstack([result_rgb, existing[..., 3]])
+                else:
+                    result = result_rgb
 
                 current_mask = np.copy(imgtrans.mask_array[y:y+h, x:x+w])
                 self.canvas.push_undo_command(InpaintUndoCommand(

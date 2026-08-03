@@ -85,6 +85,16 @@ class FontFormat(Config):
     line_spacing_type: int = LineSpacingType.Proportional
     vertical_rtl_mode: int = 0  # 0=正常(全部旋转), 1=数字正过来, 2=字母正过来, 3=全部正过来
     strokes: List = field(default_factory=list)  # 多重描边: [{"width": float, "color": [R,G,B,A]}, ...] 从外到内
+    path_type: int = 0  # 0=无路径形变, 1=弧形上弯(smile), 2=弧形下弯(frown), 3=贝塞尔
+    path_data: List = field(default_factory=list)  # 路径参数: 弧形=[curvature(0~1)], 贝塞尔=[cp1x,cp1y,cp2x,cp2y,endx,endy]
+    texture_enabled: bool = False  # 纹理总开关
+    texture_edge_enabled: bool = False  # 边缘毛糙开关
+    texture_edge_strength: float = 0.5  # 边缘毛糙强度 0.0 ~ 1.0
+    texture_edge_hardness: float = 0.5  # 边缘硬度 0.0(柔和) ~ 1.0(硬像素锯齿)
+    texture_grain_enabled: bool = False  # 内部噪点开关
+    texture_grain_strength: float = 0.5  # 内部噪点强度 0.0 ~ 1.0
+    texture_grain_size: float = 0.5  # 噪点粒度 0.0(细) ~ 1.0(粗)
+    texture_seed: int = 0  # 噪声种子, 0=自动随机
 
     deprecated_attributes: dict = field(default_factory = lambda: dict())
 
@@ -152,3 +162,11 @@ class FontFormat(Config):
         if self.strokes:
             return any(s.get("enabled", True) and s.get("width", 0) > 0 for s in self.strokes)
         return self.stroke_width > 0
+
+    @property
+    def has_texture(self) -> bool:
+        """是否有纹理效果"""
+        if not self.texture_enabled:
+            return False
+        return (self.texture_edge_enabled and self.texture_edge_strength > 0) \
+            or (self.texture_grain_enabled and self.texture_grain_strength > 0)

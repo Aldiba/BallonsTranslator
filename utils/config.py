@@ -87,6 +87,8 @@ class DrawPanelConfig(Config):
     inpainter_shape: int = 0
     stamptool_width: float = 30.
     stamptool_shape: int = 0
+    pathtool_curvature: float = 0.3  # 路径形变曲率 0~1
+    pathtool_path_type: int = 0  # 0=无, 1=弧形, 2=贝塞尔
     current_tool: int = 0
     rectool_auto: bool = False
     rectool_method: int = 0
