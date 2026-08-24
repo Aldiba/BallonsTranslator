@@ -1,4 +1,5 @@
-from typing import Union, Tuple, Callable
+from typing import Union, Tuple, Callable, List
+import os.path as osp
 
 import cv2
 import numpy as np
@@ -155,3 +156,95 @@ def apply_shadow_effect(img: Union[QPixmap, QImage, np.ndarray], color: QColor, 
 
     result = ndarray2pixmap(bg_img)
     return result, img
+
+
+# ---------------------------------------------------------------------------
+# Screentone (网点) — 图案 tile × 文字形状遮罩
+# ---------------------------------------------------------------------------
+
+_screentone_cache: dict = {}
+
+
+def load_screentone_alpha(pattern: str) -> np.ndarray:
+    """Load a screentone pattern tile from data/screentones/ and return its
+    alpha channel as np.ndarray (uint8). Cached. Returns None if not found."""
+    global _screentone_cache
+    if pattern in _screentone_cache:
+        return _screentone_cache[pattern]
+    from utils import shared as C
+    path = osp.join(C.SCREENTONE_DIR, pattern)
+    if not osp.exists(path):
+        return None
+    img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+    if img is None:
+        return None
+    if img.ndim == 2:
+        alpha = img
+    elif img.shape[2] == 4:
+        alpha = img[..., 3]
+    else:
+        alpha = img[..., 0]
+    _screentone_cache[pattern] = alpha
+    return alpha
+
+
+def apply_screentone_effect(img: Union[QPixmap, np.ndarray],
+                            pattern: str,
+                            invert: bool = False,
+                            scale: float = 0.5,
+                            bg_color: List = None) -> np.ndarray:
+    """
+    网点效果：文字形状内每像素 = 纯文字色 或 纯背景色（无颜色混合 → 无羽化）。
+
+    组成模型：
+        - 文字形状区域内填满背景色 (bg_color) 作为底层
+        - 图案遮罩的"点"处填充文字色（浮在背景色之上）
+        - 图案用最近邻缩放 + 硬阈值 → 硬边，缩放不产生软边
+
+    参数:
+        img: 渲染好的文字 RGBA（QPixmap 或 numpy array）
+        pattern: data/screentones/ 下的图案文件名
+        invert: 反转图案 alpha（点处露背景色，其余文字色）
+        scale: 图案缩放 0~1，映射到每格像素大小
+        bg_color: 背景色 [R,G,B]，默认白
+    返回: 网点化后的 numpy RGBA 图像
+    """
+    if not isinstance(img, np.ndarray):
+        img = pixmap2ndarray(img, keep_alpha=True)
+
+    alpha_tile = load_screentone_alpha(pattern)
+    if alpha_tile is None:
+        return img
+
+    h, w = img.shape[:2]
+    text_shape = img[..., 3] > 0
+    if not text_shape.any():
+        return img
+
+    # 每格像素大小: scale 0→6px, 1→48px
+    cell_px = max(2, int(round(6 + scale * 42)))
+    ph, pw = alpha_tile.shape[:2]
+    if ph == 0 or pw == 0:
+        return img
+
+    # 最近邻缩放 tile 到 cell_px 见方，再平铺覆盖 (h, w)
+    if ph != cell_px or pw != cell_px:
+        scaled = cv2.resize(alpha_tile, (cell_px, cell_px), interpolation=cv2.INTER_NEAREST)
+    else:
+        scaled = alpha_tile
+    tiled = np.tile(scaled, (h // cell_px + 1, w // cell_px + 1))[:h, :w]
+
+    # 硬阈值: 图案像素 > 127 → 文字色位置; 否则背景色位置
+    filled = tiled > 127
+    if invert:
+        filled = ~filled
+
+    if bg_color is None:
+        bg = np.array([255, 255, 255], dtype=np.uint8)
+    else:
+        bg = np.array(bg_color[:3], dtype=np.uint8)
+
+    result = img.copy()
+    empty = (~filled) & text_shape
+    result[empty, :3] = bg
+    return result

@@ -207,6 +207,12 @@ ffmt_change_texture_grain_strength = ffmt_change_shadow_offset
 ffmt_change_texture_grain_size = ffmt_change_shadow_offset
 ffmt_change_texture_seed = ffmt_change_shadow_offset
 
+ffmt_change_screentone_enabled = ffmt_change_shadow_offset
+ffmt_change_screentone_pattern = ffmt_change_shadow_offset
+ffmt_change_screentone_invert = ffmt_change_shadow_offset
+ffmt_change_screentone_scale = ffmt_change_shadow_offset
+ffmt_change_screentone_bg_color = ffmt_change_shadow_offset
+
 ffmt_change_gradient_start_color = ffmt_change_gradient_enabled
 ffmt_change_gradient_end_color = ffmt_change_gradient_enabled
 ffmt_change_gradient_angle = ffmt_change_gradient_enabled

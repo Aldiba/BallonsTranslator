@@ -19,6 +19,10 @@ DEFAULT_TEXTSTYLE_DIR = osp.join(PROGRAM_PATH, 'config/textstyles')
 if not osp.exists(DEFAULT_TEXTSTYLE_DIR):
     os.makedirs(DEFAULT_TEXTSTYLE_DIR)
 
+SCREENTONE_DIR = osp.join(PROGRAM_PATH, 'data/screentones')
+if not osp.exists(SCREENTONE_DIR):
+    os.makedirs(SCREENTONE_DIR)
+
 
 CONFIG_FONTSIZE_HEADER = 18
 CONFIG_FONTSIZE_TABLE = 16

@@ -379,6 +379,11 @@ class FontFormatPanel(Widget):
         color_label.changingColor.connect(self.changingColor)
         color_label.colorChanged.connect(self.onColorLabelChanged)
         color_label.apply_color.connect(self.on_apply_color)
+
+        color_label = self.textadvancedfmt_panel.screentone_group.bg_color_picker
+        color_label.changingColor.connect(self.changingColor)
+        color_label.colorChanged.connect(self.onColorLabelChanged)
+        color_label.apply_color.connect(self.on_apply_color)
         
         self.foldTextBtn = CheckableLabel(self.tr("Unfold"), self.tr("Fold"), False)
         self.sourceBtn = TextCheckerLabel(self.tr("Source"))
@@ -648,12 +653,13 @@ class FontFormatPanel(Widget):
         if target < 0 or target >= len(self.stroke_rows):
             return
         self.stroke_rows[idx], self.stroke_rows[target] = self.stroke_rows[target], self.stroke_rows[idx]
-        w_a = self.stroke_rows[target][-1]
-        w_b = self.stroke_rows[idx][-1]
-        self.strokeRowsLayout.removeWidget(w_a)
-        self.strokeRowsLayout.removeWidget(w_b)
-        self.strokeRowsLayout.insertWidget(target, w_a)
-        self.strokeRowsLayout.insertWidget(idx, w_b)
+        # 不要用 removeWidget + insertWidget 交换单个 widget —— Qt 布局的
+        # 内部索引会被反复 remove/insert 破坏，导致卡死/段错误。
+        # 改为整体重建布局顺序，按 stroke_rows 顺序重新添加。
+        while self.strokeRowsLayout.count():
+            self.strokeRowsLayout.takeAt(0)
+        for row in self.stroke_rows:
+            self.strokeRowsLayout.addWidget(row[-1])
         self._on_stroke_row_changed()
 
     def _remove_stroke_row(self, entry):

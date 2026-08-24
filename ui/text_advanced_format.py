@@ -1,11 +1,14 @@
 from typing import Any, Callable
+import os
+import os.path as osp
 
-from qtpy.QtWidgets import QSizePolicy, QVBoxLayout, QPushButton, QGroupBox, QLabel, QHBoxLayout, QSpinBox
+from qtpy.QtWidgets import QSizePolicy, QVBoxLayout, QPushButton, QGroupBox, QLabel, QHBoxLayout, QSpinBox, QWidget
 from qtpy.QtCore import Signal, Qt
 from qtpy.QtGui import QIcon
 
 from .custom_widget import SmallColorPickerLabel, SmallParamLabel, PanelArea, SmallSizeControlLabel, SmallSizeComboBox, SmallParamLabel, SmallSizeComboBox, SmallComboBox, TextCheckerLabel, ParamSlider
 from utils.fontformat import FontFormat
+from utils import shared as C
 import random as _random
 
 
@@ -253,6 +256,122 @@ class TextTextureGroup(QGroupBox):
         self.seed_spin.setValue(_random.randint(1, 999999))
 
 
+def list_screentone_patterns() -> list:
+    """返回 data/screentones/ 下的 .png 图案文件名列表（按名称排序）。"""
+    if not osp.isdir(C.SCREENTONE_DIR):
+        return []
+    names = [f for f in os.listdir(C.SCREENTONE_DIR) if f.lower().endswith('.png')]
+    names.sort()
+    return names
+
+
+class TextScreentoneGroup(QGroupBox):
+    """网点 (screentone) 控制 — 总开关 + 图案选择 + 反转/缩放/背景色"""
+
+    def __init__(self, on_param_changed: Callable = None):
+        super().__init__()
+        self.setTitle(self.tr('Screentone'))
+        self.on_param_changed = on_param_changed
+        self._block_signal = False
+
+        # ── 总开关 ─────────────────────────────────────────────────────
+        self.master_checker = TextCheckerLabel(self.tr('Enable'))
+        self.master_checker.checkStateChanged.connect(
+            lambda checked: self.on_param_changed('screentone_enabled', checked)
+        )
+
+        # ── 图案选择 ───────────────────────────────────────────────────
+        self.pattern_combo = SmallComboBox(parent=self)
+        self.pattern_combo.activated.connect(self._on_pattern_changed)
+
+        pattern_label = SmallParamLabel(self.tr('Pattern'))
+        pattern_row = QHBoxLayout()
+        pattern_row.addWidget(pattern_label)
+        pattern_row.addWidget(self.pattern_combo)
+
+        # ── 反转 alpha ─────────────────────────────────────────────────
+        self.invert_checker = TextCheckerLabel(self.tr('Invert'))
+        self.invert_checker.checkStateChanged.connect(
+            lambda checked: self.on_param_changed('screentone_invert', checked)
+        )
+
+        # ── 缩放 ───────────────────────────────────────────────────────
+        self.scale_slider = ParamSlider(
+            'screentone_scale', min_val=0, max_val=100, step=1, value=50,
+        )
+        self.scale_slider.paramwidget_edited.connect(self._on_float_param)
+        scale_label = SmallParamLabel(self.tr('Scale'), alignment=Qt.AlignmentFlag.AlignLeft)
+        scale_row = QHBoxLayout()
+        scale_row.addWidget(scale_label)
+        scale_row.addWidget(self.scale_slider)
+        scale_row.addStretch(-1)
+
+        # ── 背景色 ─────────────────────────────────────────────────────
+        self.bg_color_picker = SmallColorPickerLabel(self, param_name='screentone_bg_color')
+        bg_color_label = SmallParamLabel(self.tr('BG Color'))
+        bg_color_row = QHBoxLayout()
+        bg_color_row.addWidget(bg_color_label)
+        bg_color_row.addWidget(self.bg_color_picker)
+        bg_color_row.addStretch(-1)
+
+        # ── 手绘编辑器入口 ─────────────────────────────────────────────
+        self.edit_btn = QPushButton(self.tr('Draw Pattern...'))
+        self.edit_btn.setToolTip(self.tr('Open pattern editor to create your own screentone'))
+        self.edit_btn.clicked.connect(self._open_editor)
+        edit_row = QHBoxLayout()
+        edit_row.addStretch(-1)
+        edit_row.addWidget(self.edit_btn)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.master_checker)
+        layout.addLayout(pattern_row)
+        layout.addWidget(self.invert_checker)
+        layout.addLayout(scale_row)
+        layout.addLayout(bg_color_row)
+        layout.addLayout(edit_row)
+
+        self.refresh_patterns()
+
+    def refresh_patterns(self):
+        """重新扫描图案目录并刷新下拉框。"""
+        self._block_signal = True
+        current = self.pattern_combo.currentText()
+        self.pattern_combo.clear()
+        self.pattern_combo.addItems(list_screentone_patterns())
+        if current in [self.pattern_combo.itemText(i) for i in range(self.pattern_combo.count())]:
+            self.pattern_combo.setCurrentText(current)
+        self._block_signal = False
+
+    def _on_pattern_changed(self, idx: int):
+        if self._block_signal:
+            return
+        self.on_param_changed('screentone_pattern', self.pattern_combo.currentText())
+
+    def _on_float_param(self, param_key: str, value_str: str):
+        if not self._block_signal:
+            self.on_param_changed(param_key, int(value_str) / 100.0)
+
+    def _open_editor(self):
+        try:
+            from .screentone_editor import ScreentoneEditorDialog
+        except ImportError:
+            print('screentone_editor not available')
+            return
+        dlg = ScreentoneEditorDialog(parent=self)
+        if dlg.exec() == dlg.DialogCode.Accepted:
+            self.refresh_patterns()
+
+    def set_active_format(self, fmt: FontFormat):
+        self._block_signal = True
+        self.master_checker.setCheckState(fmt.screentone_enabled)
+        if fmt.screentone_pattern in [self.pattern_combo.itemText(i) for i in range(self.pattern_combo.count())]:
+            self.pattern_combo.setCurrentText(fmt.screentone_pattern)
+        self.invert_checker.setCheckState(fmt.screentone_invert)
+        self.scale_slider.setValue(int(fmt.screentone_scale * 100))
+        self.bg_color_picker.setPickerColor(fmt.screentone_bg_color)
+        self._block_signal = False
+
+
 class TextAdvancedFormatPanel(PanelArea):
 
     param_changed = Signal(str, object)
@@ -299,6 +418,9 @@ class TextAdvancedFormatPanel(PanelArea):
         self.texture_group = TextTextureGroup(self.on_format_changed)
         self.texture_group.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
 
+        self.screentone_group = TextScreentoneGroup(self.on_format_changed)
+        self.screentone_group.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
+
         hlayout = QHBoxLayout()
         hlayout.addLayout(linespacing_type_layout)
         hlayout.addLayout(opacity_layout)
@@ -308,6 +430,7 @@ class TextAdvancedFormatPanel(PanelArea):
         vlayout.addWidget(self.shadow_group)
         vlayout.addWidget(self.gradient_group)
         vlayout.addWidget(self.texture_group)
+        vlayout.addWidget(self.screentone_group)
 
         self.setContentLayout(vlayout)
         self.vlayout = vlayout
@@ -344,3 +467,5 @@ class TextAdvancedFormatPanel(PanelArea):
         self.texture_group.grain_strength_slider.setValue(int(font_format.texture_grain_strength * 100))
         self.texture_group.grain_size_slider.setValue(int(font_format.texture_grain_size * 100))
         self.texture_group.seed_spin.setValue(font_format.texture_seed)
+
+        self.screentone_group.set_active_format(font_format)

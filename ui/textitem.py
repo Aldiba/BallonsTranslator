@@ -14,7 +14,7 @@ from utils.fontformat import FontFormat, px2pt, pt2px
 from .misc import td_pattern, table_pattern, ndarray2pixmap
 from .scene_textlayout import VerticalTextDocumentLayout, HorizontalTextDocumentLayout, SceneTextLayout
 from .path_textlayout import PathTextDocumentLayout
-from .text_graphical_effect import apply_shadow_effect, apply_texture_effect
+from .text_graphical_effect import apply_shadow_effect, apply_texture_effect, apply_screentone_effect
 
 TEXTRECT_SHOW_COLOR = QColor(30, 147, 229, 170)
 TEXTRECT_SELECTED_COLOR = QColor(248, 64, 147, 170)
@@ -189,7 +189,8 @@ class TextBlkItem(QGraphicsTextItem):
         paint_stroke = self.fontformat.has_stroke
         paint_shadow = self.fontformat.shadow_radius > 0 and self.fontformat.shadow_strength > 0
         paint_texture = self.fontformat.has_texture
-        if not paint_shadow and not paint_stroke and not paint_texture or empty:
+        paint_screentone = self.fontformat.has_screentone
+        if not paint_shadow and not paint_stroke and not paint_texture and not paint_screentone or empty:
             self.background_pixmap = None
             self.grain_overlay = None
             return
@@ -231,6 +232,17 @@ class TextBlkItem(QGraphicsTextItem):
                 self.grain_overlay = ndarray2pixmap(grain_array)
             else:
                 self.grain_overlay = None
+
+        # screentone — 文字形状内填背景色，图案点处填文字色
+        if paint_screentone:
+            st_img = apply_screentone_effect(
+                target_map,
+                pattern=self.fontformat.screentone_pattern,
+                invert=self.fontformat.screentone_invert,
+                scale=self.fontformat.screentone_scale,
+                bg_color=self.fontformat.screentone_bg_color,
+            )
+            target_map = ndarray2pixmap(st_img)
 
         # shadow
         if paint_shadow:
@@ -1158,6 +1170,16 @@ class TextBlkItem(QGraphicsTextItem):
         self.fontformat.texture_grain_strength = fmt.texture_grain_strength
         self.fontformat.texture_grain_size = fmt.texture_grain_size
         self.fontformat.texture_seed = fmt.texture_seed
+        if repaint:
+            self.repaint_background()
+
+    def setScreentone(self, fmt: FontFormat, repaint=True):
+        """设置网点效果（总开关 / 图案 / 反转 / 缩放 / 背景色）"""
+        self.fontformat.screentone_enabled = fmt.screentone_enabled
+        self.fontformat.screentone_pattern = fmt.screentone_pattern
+        self.fontformat.screentone_invert = fmt.screentone_invert
+        self.fontformat.screentone_scale = fmt.screentone_scale
+        self.fontformat.screentone_bg_color = fmt.screentone_bg_color
         if repaint:
             self.repaint_background()
 

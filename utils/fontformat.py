@@ -30,6 +30,14 @@ class TextAlignment(enum.IntEnum):
     Right = 2
 
 
+class ScreentoneStyle(enum.IntEnum):
+    None_ = 0       # 无
+    Dots = 1        # 网点（圆形点阵）
+    Lines = 2       # 斜线（排线）
+    Grid = 3        # 方格/十字网格
+    Crosshatch = 4  # 交叉排线
+
+
 fontweight_qt5_to_qt6 = {0: 100, 12: 200, 25: 300, 50: 400, 57: 500, 63: 600, 75: 700, 81: 800, 87: 900}
 fontweight_qt6_to_qt5 = {100: 0, 200: 12, 300: 25, 400: 50, 500: 57, 600: 63, 700: 75, 800: 81, 900: 87}
 
@@ -95,6 +103,13 @@ class FontFormat(Config):
     texture_grain_strength: float = 0.5  # 内部噪点强度 0.0 ~ 1.0
     texture_grain_size: float = 0.5  # 噪点粒度 0.0(细) ~ 1.0(粗)
     texture_seed: int = 0  # 噪声种子, 0=自动随机
+
+    # 网点 (screentone)
+    screentone_enabled: bool = False  # 网点总开关
+    screentone_pattern: str = ''  # 图案文件名 (data/screentones/ 下的 .png)
+    screentone_invert: bool = False  # 反转 alpha (网点处露背景色)
+    screentone_scale: float = 0.5  # 图案缩放 0.0(小) ~ 1.0(大)
+    screentone_bg_color: List = field(default_factory=lambda: [255, 255, 255])  # 背景色，默认白
 
     deprecated_attributes: dict = field(default_factory = lambda: dict())
 
@@ -170,3 +185,8 @@ class FontFormat(Config):
             return False
         return (self.texture_edge_enabled and self.texture_edge_strength > 0) \
             or (self.texture_grain_enabled and self.texture_grain_strength > 0)
+
+    @property
+    def has_screentone(self) -> bool:
+        """是否有网点效果"""
+        return self.screentone_enabled and self.screentone_pattern != ''
